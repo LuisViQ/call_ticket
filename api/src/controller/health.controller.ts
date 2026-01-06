@@ -1,7 +1,5 @@
 import { Request, Response } from "express";
 
 export function healthController(req: Request, res: Response) {
-  return res.status(200).json({
-    data: "Funcionando"
-  });
+  return res.json({ data: "ok" });
 }

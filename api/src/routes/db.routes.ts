@@ -1,10 +1,8 @@
 import { Router } from "express";
 import { dbTestController } from "../controller/db.controller.js";
 
-const router = Router()
-
+const router = Router();
 
 router.get("/", dbTestController);
 
-
-export default router
+export default router;
