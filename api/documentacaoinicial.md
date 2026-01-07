@@ -12,13 +12,19 @@ LoginOutput
 -> { user: User, token: string }
 
 Ticket
--> { id: number, user_id: number, description: string, status: TicketStatus, created_at: string, updated_at: string }
+-> { id: number, user_id: number, description: string, status: TicketStatus, ticket_type: TicketType | null, area_type: AreaType | null, created_at: string, updated_at: string }
 
 TicketStatus
 -> "AGUARDANDO" | "EM_ATENDIMENTO" | "CANCELADO" | "ENCERRADO"
 
+TicketType
+-> string
+
+AreaType
+-> string
+
 TicketRow
--> { id: number, description: string, status: TicketStatus }
+-> { id: number, description: string, status: TicketStatus, ticket_type: TicketType | null, area_type: AreaType | null }
 
 ErrorResponse
 -> { ok: false, error: string }
@@ -52,10 +58,10 @@ GET /tickets/:id retorna todos os tickets do usuário enviado pelo parametro.
 
 POST /tickets cria um novo ticket para o usuário enviado pelo Header
 Header: Authorization: Bearer <token>
-Body: { "description": "Sem internet", "status": "AGUARDANDO", "url": "https://exemplo.com/foto.jpg" }
+Body: { "description": "Sem internet", "status": "AGUARDANDO", "ticket_type": "SUPORTE", "area_type": "TI", "url": "https://exemplo.com/foto.jpg" }
 -> { "ok": true, "data": { "id": 123 } }
 
 PATCH /tickets/:id edita um ticket já criado, se localiza pelo id enviado pelo URL e pelo Header
 Header: Authorization: Bearer <token>
-Body: { "status": "EM_ATENDIMENTO", "description": "Ainda esta lento" }
+Body: { "status": "EM_ATENDIMENTO", "description": "Ainda esta lento", "ticket_type": "SUPORTE", "area_type": "TI" }
 -> { "ok": true, "data": { "updated": true } }

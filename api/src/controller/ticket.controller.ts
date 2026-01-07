@@ -1,5 +1,12 @@
 import { Request, Response } from "express";
-import { insertTicket, listTickets, patchTicket, type TicketStatus } from "../repository/ticket.repository.js";
+import {
+  insertTicket,
+  listTickets,
+  patchTicket,
+  type AreaType,
+  type TicketStatus,
+  type TicketType
+} from "../repository/ticket.repository.js";
 
 // Função de controller dos tickets
 export async function ticketController(req: Request, res: Response) {
@@ -26,13 +33,15 @@ export async function ticketController(req: Request, res: Response) {
       // aqui ele recebe os novos dados a ser atualizado
       const newStatus = req.body?.status as TicketStatus | undefined;
       const newDescription = req.body?.description as string | undefined;
+      const ticketType = (req.body?.ticket_type ?? req.body?.ticketType) as TicketType | null | undefined;
+      const areaType = (req.body?.area_type ?? req.body?.areaType) as AreaType | null | undefined;
 
       // aqui verifica se existem
       if (!newStatus) {
         return res.status(400).json({ ok: false, error: "Status is required" });
       }
       // aqui faz a atualização
-      const updated = await patchTicket(ticketId, userId, newStatus, newDescription);
+      const updated = await patchTicket(ticketId, userId, newStatus, newDescription, ticketType, areaType);
       //  aqui caso não haja nada dentro de updated (deu erro) ele retornar uma mensagem de erro
       if (!updated) {
         return res.status(404).json({ ok: false, error: "Ticket not found" });
@@ -43,13 +52,15 @@ export async function ticketController(req: Request, res: Response) {
     //recebe as informações para um novo chamado
     const description = req.body?.description as string | undefined;
     const status = req.body?.status as TicketStatus | undefined;
+    const ticketType = (req.body?.ticket_type ?? req.body?.ticketType) as TicketType | null | undefined;
+    const areaType = (req.body?.area_type ?? req.body?.areaType) as AreaType | null | undefined;
     const url = req.body?.url as string | undefined;
     //verifica se recebeu a descrição e o status corretamente
     if (!description || !status) {
       return res.status(400).json({ ok: false, error: "Description and status are required" });
     }
     // faz a inserção do chamado ao banco de dados
-    const ticketId = await insertTicket(userId, description, status, url);
+    const ticketId = await insertTicket(userId, description, status, ticketType, areaType, url);
     return res.status(201).json({ ok: true, data: { id: ticketId } });
   } catch (error) {
     console.error("Ticket failed", error);
