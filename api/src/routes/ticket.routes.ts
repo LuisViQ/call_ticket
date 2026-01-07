@@ -4,7 +4,7 @@ import { requireAuth } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
-router.get("/", requireAuth, ticketController);
+router.get("/:id", requireAuth, ticketController);
 router.post("/", requireAuth, ticketController);
 router.patch("/:id", requireAuth, ticketController);
 

@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import pool from "../database/pool.js";
 
-/** Check database connectivity. */
+// Verifica a conexão com o banco de dados
 export async function dbTestController(req: Request, res: Response) {
   try {
     const [rows] = await pool.query("SELECT 1 AS alive");

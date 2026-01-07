@@ -7,11 +7,12 @@ type TicketRow = {
   description: string;
   status: TicketStatus;
 };
-/** Create a ticket and return the new id. */
+// responsavel por criar o chamado de fato
 export async function insertTicket(
   userId: number,
   description: string,
   status: TicketStatus,
+  // aqui podendo ou não criar com uma imagem
   url?: string
 ) {
   const [result] = await pool.execute<ResultSetHeader>(
@@ -24,11 +25,12 @@ export async function insertTicket(
   return result.insertId;
 }
 
-/** Attach a file to a ticket and return the new id. */
+// faz a inserção de uma imagem caso venha com o url 
 export async function insertTicketImage(
   ticketId: number,
   fileUrl: string,
 ) {
+  // verifica o tipo de arquivo para salvar dentro do banco de dados
   const fileType = path.extname(fileUrl).replace(".", "");
   const [result] = await pool.execute<ResultSetHeader>(
     "INSERT INTO ticket_attachments (ticket_id, file_url, file_type) VALUES (?, ?, ?)",
@@ -37,15 +39,15 @@ export async function insertTicketImage(
   return result.insertId;
 }
 
-
-export async function listTickets(userId: number): Promise<TicketRow[]> {
+// responsavel por listar todos os chamados do usuário
+export async function listTickets(userId: number): Promise<TicketRow[] | string> {
   const [rows] = await pool.execute(
     "SELECT id, description, status FROM tickets WHERE user_id = ?",
     [userId]
   );
   return rows as TicketRow[];
 }
-
+// responsavel por editar um chamado já existente, podendo mudar a descrição ou o status
 export async function patchTicket(
   ticketId: number,
   userId: number,
