@@ -65,3 +65,10 @@ PATCH /tickets/:id edita um ticket já criado, se localiza pelo id enviado pelo 
 Header: Authorization: Bearer <token>
 Body: { "status": "EM_ATENDIMENTO", "description": "Ainda esta lento", "ticket_type": "SUPORTE", "area_type": "TI" }
 -> { "ok": true, "data": { "updated": true } }
+
+Uploads
+
+POST /uploads faz upload de imagem e salva localmente
+Header: Authorization: Bearer <token>
+Body: multipart/form-data com campo "image"
+-> { "ok": true, "data": { "filename": "uuid.jpg", "originalName": "foto.jpg", "mimetype": "image/jpeg", "size": 12345, "path": "uploads/uuid.jpg", "url": "/uploads/uuid.jpg" } }
