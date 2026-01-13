@@ -2,9 +2,12 @@
 import { Alert, Image, Pressable, Text, TextInput, View } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { styles } from "./styles";
-import ticketService, { uploadTicketImage } from "../../services/tickets.service";
+import ticketService, {
+  uploadTicketImage,
+} from "../../services/tickets.service";
 import * as ImagePicker from "expo-image-picker";
 
+// Tela para abertura de novo chamado.
 export default function NewTicketScreen() {
   const [description, setDescription] = useState("");
   const [callType, setCallType] = useState("");
@@ -12,6 +15,7 @@ export default function NewTicketScreen() {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Seleciona imagem da galeria.
   async function handlePickImage() {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (permission.status !== "granted") {
@@ -27,6 +31,23 @@ export default function NewTicketScreen() {
     }
   }
 
+  // Tira foto usando a camera.
+  async function handleTakePhoto() {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (permission.status !== "granted") {
+      Alert.alert("Erro", "Permissao de camera necessaria.");
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets && result.assets[0]) {
+      setImageUri(result.assets[0].uri);
+    }
+  }
+
+  // Envia o chamado para a API.
   async function handleSubmit() {
     if (!description || !callArea || !callType) {
       Alert.alert("Erro", "Preencha descricao, area e tipo");
@@ -49,7 +70,7 @@ export default function NewTicketScreen() {
       Alert.alert("Sucesso", "Chamado enviado com sucesso!");
     } catch (error) {
       console.error(error);
-      Alert.alert("Erro", "Nao foi possivel enviar o chamado.");
+      Alert.alert("Erro", "Não foi possivel enviar o chamado.");
     } finally {
       setIsSubmitting(false);
     }
@@ -57,9 +78,7 @@ export default function NewTicketScreen() {
 
   return (
     <View style={styles.screen}>
-      {/* Form */}
       <View style={styles.form}>
-        {/* Description */}
         <View style={styles.field}>
           <Text style={styles.pickerLabel}>Descrição do Chamado</Text>
           <TextInput
@@ -71,7 +90,6 @@ export default function NewTicketScreen() {
           />
         </View>
 
-        {/* Call Type */}
         <View style={styles.field}>
           <Text style={styles.pickerLabel}>Tipo de chamado</Text>
           <View style={styles.pickerBox}>
@@ -89,7 +107,6 @@ export default function NewTicketScreen() {
           </View>
         </View>
 
-        {/* Call Area */}
         <View style={styles.field}>
           <Text style={styles.pickerLabel}>Area do chamado</Text>
           <View style={styles.pickerBox}>
@@ -107,20 +124,31 @@ export default function NewTicketScreen() {
           </View>
         </View>
 
-        {/* Image */}
         <View style={styles.field}>
           <Text style={styles.pickerLabel}>Imagem (opcional)</Text>
-          <Pressable style={styles.secondaryButton} onPress={handlePickImage}>
-            <Text style={styles.secondaryButtonText}>
-              {imageUri ? "Trocar imagem" : "Selecionar imagem"}
-            </Text>
-          </Pressable>
+          <View style={styles.imageActions}>
+            <Pressable
+              style={[styles.secondaryButton, styles.imageActionButton]}
+              onPress={handleTakePhoto}
+            >
+              <Text style={styles.secondaryButtonText}>
+                {imageUri ? "Tirar outra foto" : "Tirar foto"}
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[styles.secondaryButton, styles.imageActionButton]}
+              onPress={handlePickImage}
+            >
+              <Text style={styles.secondaryButtonText}>
+                {imageUri ? "Trocar imagem" : "Selecionar imagem"}
+              </Text>
+            </Pressable>
+          </View>
           {imageUri ? (
             <Image source={{ uri: imageUri }} style={styles.imagePreview} />
           ) : null}
         </View>
 
-        {/* Submit */}
         <Pressable
           style={styles.button}
           onPress={handleSubmit}

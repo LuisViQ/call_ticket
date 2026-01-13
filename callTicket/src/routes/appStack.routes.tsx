@@ -7,6 +7,7 @@ import EditTicketScreen from "../screens/EditCallScreen";
 import TicketDetailScreen from "../screens/TicketDetailScreen";
 const { Screen, Navigator } = createStackNavigator();
 
+// Stack de rotas autenticadas do app.
 export function AppStack() {
   return (
     <Navigator>

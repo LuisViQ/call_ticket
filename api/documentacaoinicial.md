@@ -24,7 +24,10 @@ AreaType
 -> string
 
 TicketRow
--> { id: number, description: string, status: TicketStatus, ticket_type: TicketType | null, area_type: AreaType | null }
+-> { id: number, description: string, status: TicketStatus, ticket_type: TicketType | null, area_type: AreaType | null, attachments: TicketAttachment[] }
+
+TicketAttachment
+-> { id: number, ticket_id: number, file_url: string, file_type: string }
 
 ErrorResponse
 -> { ok: false, error: string }
@@ -55,10 +58,12 @@ Tickets
 
 GET /tickets/:id retorna todos os tickets do usuário enviado pelo parametro.
 -> { "ok": true, "data": [TicketRow] }
+Obs: attachments[].file_url e o caminho da imagem.
 
 POST /tickets cria um novo ticket para o usuário enviado pelo Header
 Header: Authorization: Bearer <token>
 Body: { "description": "Sem internet", "status": "AGUARDANDO", "ticket_type": "SUPORTE", "area_type": "TI", "url": "https://exemplo.com/foto.jpg" }
+Obs: url e opcional e quando informado salva em ticket_attachments.
 -> { "ok": true, "data": { "id": 123 } }
 
 PATCH /tickets/:id edita um ticket já criado, se localiza pelo id enviado pelo URL e pelo Header
@@ -68,7 +73,8 @@ Body: { "status": "EM_ATENDIMENTO", "description": "Ainda esta lento", "ticket_t
 
 Uploads
 
-POST /uploads faz upload de imagem e salva localmente
+POST /uploads faz upload de imagem e salva localmente em ticket_attachments
 Header: Authorization: Bearer <token>
 Body: multipart/form-data com campo "image"
--> { "ok": true, "data": { "filename": "uuid.jpg", "originalName": "foto.jpg", "mimetype": "image/jpeg", "size": 12345, "path": "uploads/uuid.jpg", "url": "/uploads/uuid.jpg" } }
+Obs: use o url retornado no campo url do ticket.
+-> { "ok": true, "data": { "filename": "uuid.jpg", "originalName": "foto.jpg", "mimetype": "image/jpeg", "size": 12345, "path": "ticket_attachments/uuid.jpg", "url": "/ticket_attachments/uuid.jpg" } }

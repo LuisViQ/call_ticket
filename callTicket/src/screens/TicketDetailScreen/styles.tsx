@@ -1,5 +1,6 @@
 import { StyleSheet } from "react-native";
 
+// Estilos da tela de detalhe do chamado.
 export const styles = StyleSheet.create({
   container: {
     padding: 24,
@@ -28,6 +29,7 @@ export const styles = StyleSheet.create({
     height: 220,
     borderRadius: 8,
     backgroundColor: "#F3F4F6",
+    marginBottom: 12,
   },
   emptyText: {
     fontSize: 14,

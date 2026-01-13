@@ -1,13 +1,13 @@
 import React from "react";
-import { ScrollView, View } from "react-native";
 
-import { styles } from "./styles";
 import CardGridContentList from "../../components/CardGridContendList";
+import { CardGridContentListProvider } from "../../contexts/CardGridContentListContext";
 
+// Tela de lista de chamados com provider dedicado.
 export function ListCallScreen() {
   return (
-    <ScrollView>
+    <CardGridContentListProvider>
       <CardGridContentList />
-    </ScrollView>
+    </CardGridContentListProvider>
   );
 }

@@ -1,5 +1,6 @@
 import { StyleSheet } from "react-native";
 
+// Estilos da tela de novo chamado.
 export const styles = StyleSheet.create({
   screen: {
     flex: 1,
@@ -16,7 +17,7 @@ export const styles = StyleSheet.create({
   title: {
     fontSize: 25,
     color: "#000",
-    fontFamily: "InclusiveSans-Regular", // se não tiver fonte, remove essa linha
+    fontFamily: "InclusiveSans-Regular",
   },
 
   form: {
@@ -31,7 +32,7 @@ export const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: 12,
     color: "#000",
-    fontFamily: "Inter-Medium", // se não tiver fonte, remove
+    fontFamily: "Inter-Medium",
   },
 
   input: {
@@ -43,7 +44,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E8E8E8",
     borderRadius: 6,
-    fontFamily: "Inter-Medium", // se não tiver fonte, remove
+    fontFamily: "Inter-Medium",
   },
 
   pickerLabel: {
@@ -83,6 +84,13 @@ export const styles = StyleSheet.create({
     borderColor: "#E8E8E8",
     alignItems: "center",
     justifyContent: "center",
+  },
+  imageActions: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  imageActionButton: {
+    flex: 1,
   },
   secondaryButtonText: {
     fontSize: 12,

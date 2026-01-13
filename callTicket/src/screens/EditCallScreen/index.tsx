@@ -9,6 +9,7 @@ import {
   updateTicketService,
 } from "../../services/tickets.service";
 
+// Tela para editar chamados existentes.
 export default function EditTicketScreen() {
   const [description, setDescription] = useState("");
   const [callType, setCallType] = useState<TicketStatus | "">("");
@@ -20,6 +21,7 @@ export default function EditTicketScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Aplica os dados do chamado selecionado no formulario.
   function applyTicketSelection(ticket: TicketItem) {
     setSelectedTicketId(ticket.id);
     setDescription(ticket.description || "");
@@ -29,6 +31,7 @@ export default function EditTicketScreen() {
     setCallType(ticket.status);
   }
 
+  // Atualiza o chamado selecionado no picker.
   function handleTicketChange(value: number | string) {
     if (value === 0 || value === "0") {
       setSelectedTicketId(null);
@@ -43,6 +46,7 @@ export default function EditTicketScreen() {
     }
   }
 
+  // Formata o label exibido no picker.
   function formatTicketLabel(ticket: TicketItem) {
     const rawDescription = (ticket.description || "Sem descricao").trim();
     const shortDescription =
@@ -52,6 +56,7 @@ export default function EditTicketScreen() {
     return `#${ticket.id} - ${shortDescription}`;
   }
 
+  // Carrega a lista de chamados ao montar.
   useEffect(() => {
     let active = true;
 
@@ -65,7 +70,7 @@ export default function EditTicketScreen() {
         }
         if (!result.ok) {
           setTickets([]);
-          setError("Nao foi possivel carregar os chamados.");
+          setError("Não há chamados para esse usuário");
           return;
         }
         setTickets(result.data || []);
@@ -75,7 +80,7 @@ export default function EditTicketScreen() {
       } catch (error) {
         console.error(error);
         if (active) {
-          setError("Nao foi possivel carregar os chamados.");
+          setError("Não foi possivel carregar os chamados.");
         }
       } finally {
         if (active) {
@@ -91,6 +96,7 @@ export default function EditTicketScreen() {
     };
   }, []);
 
+  // Envia atualizacao do chamado selecionado.
   async function handleSubmit() {
     if (!selectedTicketId) {
       Alert.alert("Erro", "Selecione um chamado.");
@@ -111,15 +117,13 @@ export default function EditTicketScreen() {
       Alert.alert("Sucesso", "Chamado atualizado com sucesso!");
     } catch (error) {
       console.error(error);
-      Alert.alert("Erro", "Nao foi possivel atualizar o chamado.");
+      Alert.alert("Erro", "Não foi possivel atualizar o chamado.");
     }
   }
 
   return (
     <View style={styles.screen}>
-      {/* Form */}
       <View style={styles.form}>
-        {/* Ticket */}
         <View style={styles.field}>
           <Text style={styles.pickerLabel}>Chamado</Text>
           {isLoading ? (
@@ -148,7 +152,6 @@ export default function EditTicketScreen() {
           ) : null}
         </View>
 
-        {/* Call Type */}
         <View style={styles.field}>
           <Text style={styles.pickerLabel}>Estado do chamado</Text>
           <View style={styles.pickerBox}>
@@ -166,7 +169,6 @@ export default function EditTicketScreen() {
           </View>
         </View>
 
-        {/* Submit */}
         <Pressable style={styles.button} onPress={handleSubmit}>
           <Text style={styles.buttonText}>Enviar</Text>
         </Pressable>

@@ -2,6 +2,7 @@ import { createStackNavigator } from "@react-navigation/stack";
 import { LoginScreen } from "../screens/LoginScreen";
 const { Screen, Navigator } = createStackNavigator();
 
+// Stack de rotas para usuarios nao autenticados.
 export function AuthStack() {
   return (
     <Navigator>

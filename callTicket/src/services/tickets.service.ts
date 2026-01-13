@@ -1,5 +1,7 @@
+// Helpers para ler token e dados do usuario local.
 import { getJwtToken, getUserData } from "../utils/utils";
 
+// Tipos usados pelo servico de chamados.
 export type TicketStatus =
   | "AGUARDANDO"
   | "EM_ATENDIMENTO"
@@ -20,6 +22,7 @@ export type TicketItem = {
   ticket_type: string | null;
   area_type: string | null;
   url?: string | null;
+  attachments?: Array<{ file_url: string }> | null;
 };
 
 export type TicketListResponse = {
@@ -45,6 +48,7 @@ export type UploadResponse = {
   path?: string;
 };
 
+// Recupera o token JWT armazenado localmente.
 async function getAuthToken(): Promise<string> {
   const token = await getJwtToken();
   if (!token) {
@@ -53,6 +57,7 @@ async function getAuthToken(): Promise<string> {
   return token;
 }
 
+// Recupera o id do usuario logado.
 async function getUserId(): Promise<number> {
   const user = await getUserData();
   if (!user || typeof user.id !== "number") {
@@ -61,6 +66,7 @@ async function getUserId(): Promise<number> {
   return user.id;
 }
 
+// Cria um novo chamado.
 export default async function ticketService(
   ticket: Ticket
 ): Promise<TicketStatus> {
@@ -72,6 +78,7 @@ export default async function ticketService(
   const token = await getAuthToken();
 
   try {
+    // Monta o payload de criacao do chamado.
     const body: Record<string, unknown> = {
       description: ticket.description,
       status: "AGUARDANDO",
@@ -82,6 +89,7 @@ export default async function ticketService(
       body.url = ticket.url;
     }
 
+    // Envia o chamado para a API.
     const response = await fetch(`${baseUrl}tickets`, {
       method: "POST",
       headers: {
@@ -102,6 +110,7 @@ export default async function ticketService(
   }
 }
 
+// Lista os chamados do usuario atual.
 export async function showTicketService(
   userId?: number
 ): Promise<TicketListResponse> {
@@ -115,6 +124,7 @@ export async function showTicketService(
   const path = `tickets/${resolvedUserId}`;
 
   try {
+    // Busca os chamados do usuario.
     const response = await fetch(`${baseUrl}${path}`, {
       method: "GET",
       headers: {
@@ -134,6 +144,7 @@ export async function showTicketService(
   }
 }
 
+// Atualiza um chamado existente.
 export async function updateTicketService(
   ticketId: number,
   payload: TicketUpdatePayload
@@ -146,6 +157,7 @@ export async function updateTicketService(
   const token = await getAuthToken();
 
   try {
+    // Monta o payload de atualizacao do chamado.
     const body: Record<string, unknown> = {
       status: payload.status,
       description: payload.description,
@@ -156,6 +168,7 @@ export async function updateTicketService(
       body.url = payload.url;
     }
 
+    // Envia a atualizacao para a API.
     const response = await fetch(`${baseUrl}tickets/${ticketId}`, {
       method: "PATCH",
       headers: {
@@ -176,6 +189,7 @@ export async function updateTicketService(
   }
 }
 
+// Normaliza respostas de upload para um formato unico.
 function normalizeUploadResponse(payload: unknown): UploadResponse {
   if (typeof payload === "string") {
     return { url: payload };
@@ -194,6 +208,7 @@ function normalizeUploadResponse(payload: unknown): UploadResponse {
   throw new Error("Invalid upload response");
 }
 
+// Faz upload de imagem do chamado.
 export async function uploadTicketImage(uri: string): Promise<UploadResponse> {
   const apiUrl = process.env.EXPO_PUBLIC_BASE_URL;
   if (!apiUrl) {
@@ -205,6 +220,7 @@ export async function uploadTicketImage(uri: string): Promise<UploadResponse> {
   const match = /\.(\w+)$/.exec(filename);
   const type = match ? `image/${match[1]}` : "image/jpeg";
 
+  // Monta o FormData com o arquivo da imagem.
   const formData = new FormData();
   formData.append(
     "image",
@@ -216,6 +232,7 @@ export async function uploadTicketImage(uri: string): Promise<UploadResponse> {
   );
 
   try {
+    // Envia o arquivo para o endpoint de upload.
     const response = await fetch(`${baseUrl}uploads`, {
       method: "POST",
       headers: {

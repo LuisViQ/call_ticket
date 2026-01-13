@@ -1,5 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { loginResponse } from "../services/auth.service";
+
+// Helpers para persistencia local de auth.
 export const storeJwtToken = async (token: string) => {
   try {
     await AsyncStorage.setItem("jwtToken", token);
@@ -8,6 +10,7 @@ export const storeJwtToken = async (token: string) => {
   }
 };
 
+// Le o token JWT salvo.
 export const getJwtToken = async () => {
   try {
     const value = await AsyncStorage.getItem("jwtToken");
@@ -18,6 +21,7 @@ export const getJwtToken = async () => {
     throw e;
   }
 };
+// Remove o token JWT do storage.
 export const removeJwtToken = async () => {
   try {
     await AsyncStorage.removeItem("jwtToken");
@@ -27,6 +31,7 @@ export const removeJwtToken = async () => {
   console.log("Done.");
 };
 
+// Salva dados do usuario autenticado.
 export const storeUserData = async (value: loginResponse) => {
   try {
     const jsonValue = JSON.stringify(value.data.user);
@@ -36,6 +41,7 @@ export const storeUserData = async (value: loginResponse) => {
     throw e;
   }
 };
+// Recupera os dados do usuario autenticado.
 export const getUserData = async () => {
   try {
     const jsonValue = await AsyncStorage.getItem("userData");

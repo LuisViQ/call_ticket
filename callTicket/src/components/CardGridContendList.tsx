@@ -1,109 +1,77 @@
-import React, { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import React from "react";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import type { StackNavigationProp } from "@react-navigation/stack";
-import {
-  showTicketService,
-  TicketItem,
-  TicketListResponse,
-} from "../services/tickets.service";
+import { useCardGridContentList } from "../contexts/CardGridContentListContext";
+import type { TicketItem } from "../services/tickets.service";
 
+// Tipos de navegacao usados na tela de detalhe.
 type AppStackParamList = {
   TicketDetailScreen: { ticket: TicketItem };
 };
+// Componente que renderiza a lista de chamados.
 export const CardGridContentList = () => {
-  const [tickets, setTickets] = useState<TicketItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { tickets, isLoading, error } = useCardGridContentList();
   const navigation = useNavigation<StackNavigationProp<AppStackParamList>>();
 
-  useEffect(() => {
-    let isActive = true;
-
-    async function loadTickets() {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const data = (await showTicketService()) as TicketListResponse;
-        if (isActive) {
-          if (!data.ok) {
-            setTickets([]);
-            setError("Nao ha chamados.");
-            return;
-          }
-          setTickets(data.data || []);
-        }
-      } catch (err) {
-        console.error(err);
-        if (isActive) {
-          setError("Nao foi possivel carregar os chamados.");
-        }
-      } finally {
-        if (isActive) {
-          setIsLoading(false);
-        }
-      }
+  // Renderiza estado vazio, erro ou carregando.
+  const renderEmptyState = () => {
+    if (isLoading) {
+      return <Text style={styles.stateText}>Carregando chamados...</Text>;
     }
-
-    loadTickets();
-
-    return () => {
-      isActive = false;
-    };
-  }, []);
+    if (error) {
+      return <Text style={styles.stateText}>{error}</Text>;
+    }
+    return <Text style={styles.stateText}>Nenhum chamado encontrado.</Text>;
+  };
 
   return (
     <SafeAreaView style={styles.cardGridContentList}>
-      <View style={styles.view}>
-        {isLoading ? (
-          <Text style={styles.stateText}>Carregando chamados...</Text>
-        ) : null}
-        {!isLoading && error ? (
-          <Text style={styles.stateText}>{error}</Text>
-        ) : null}
-        {!isLoading && !error && tickets.length === 0 ? (
-          <Text style={styles.stateText}>Nenhum chamado encontrado.</Text>
-        ) : null}
-        {!isLoading && !error && tickets.length > 0 ? (
-          <View style={styles.cards}>
-            {tickets.map((ticket) => (
-              <Pressable
-                key={ticket.id}
-                style={styles.card}
-                onPress={() =>
-                  navigation.navigate("TicketDetailScreen", { ticket })
-                }
-              >
-                <View style={styles.body}>
-                  <View style={styles.text}>
-                    <Text style={styles.title}>Chamado #{ticket.id}</Text>
-                    <Text
-                      style={[styles.bodyTextFor, styles.button2Typo]}
-                      numberOfLines={3}
-                    >
-                      {ticket.description}
-                    </Text>
-                    <Text style={[styles.metaText, styles.button2Typo]}>
-                      Tipo: {ticket.ticket_type || "Nao informado"}
-                    </Text>
-                    <Text style={[styles.metaText, styles.button2Typo]}>
-                      Area: {ticket.area_type || "Nao informado"}
-                    </Text>
-                  </View>
-                  <View style={[styles.buttonGroup, styles.buttonFlexBox]}>
-                    <View style={[styles.button, styles.buttonFlexBox]}>
-                      <Text style={[styles.button2, styles.button2Typo]}>
-                        {ticket.status}
-                      </Text>
-                    </View>
-                  </View>
+      {/* Lista de chamados recebidos do contexto. */}
+      <FlatList
+        data={tickets}
+        // Usa o id como chave do item.
+        keyExtractor={(item) => String(item.id)}
+        contentContainerStyle={styles.view}
+        ListEmptyComponent={renderEmptyState}
+        ItemSeparatorComponent={() => <View style={styles.cardSeparator} />}
+        // Abre a tela de detalhes do chamado.
+        renderItem={({ item: ticket }) => (
+          <Pressable
+            style={styles.card}
+            onPress={() =>
+              navigation.navigate("TicketDetailScreen", { ticket })
+            }
+          >
+            {/* Conteudo do card do chamado. */}
+            <View style={styles.body}>
+              <View style={styles.text}>
+                <Text style={styles.title}>Chamado #{ticket.id}</Text>
+                <Text
+                  style={[styles.bodyTextFor, styles.button2Typo]}
+                  numberOfLines={3}
+                >
+                  {ticket.description}
+                </Text>
+                <Text style={[styles.metaText, styles.button2Typo]}>
+                  Tipo: {ticket.ticket_type || "Nao informado"}
+                </Text>
+                <Text style={[styles.metaText, styles.button2Typo]}>
+                  Area: {ticket.area_type || "Nao informado"}
+                </Text>
+              </View>
+              <View style={[styles.buttonGroup, styles.buttonFlexBox]}>
+                <View style={[styles.button, styles.buttonFlexBox]}>
+                  <Text style={[styles.button2, styles.button2Typo]}>
+                    {ticket.status}
+                  </Text>
                 </View>
-              </Pressable>
-            ))}
-          </View>
-        ) : null}
-      </View>
+              </View>
+            </View>
+          </Pressable>
+        )}
+      />
     </SafeAreaView>
   );
 };
@@ -126,9 +94,8 @@ const styles = StyleSheet.create({
     padding: 24,
     backgroundColor: "#fff",
   },
-  cards: {
-    gap: 48,
-    alignSelf: "stretch",
+  cardSeparator: {
+    height: 48,
   },
   card: {
     gap: 16,

@@ -9,6 +9,7 @@ import { useNavigation } from "@react-navigation/native";
 
 import type { StackNavigationProp } from "@react-navigation/stack";
 
+// Tipos de navegacao usados na home.
 type AppStackParamList = {
   Home: undefined;
   NewTicketScreen: undefined;
@@ -16,14 +17,17 @@ type AppStackParamList = {
   EditTicketScreen: undefined;
 };
 
+// Tela inicial com atalhos de chamados.
 export function HomeScreen() {
   const { setIsAuth } = useAuth();
   const [userName, setUserName] = useState<string | null>(null);
   const navigation = useNavigation<StackNavigationProp<AppStackParamList>>();
+  // Remove auth local e encerra sessao.
   function handleLogout() {
     setIsAuth(false);
     removeJwtToken();
   }
+  // Carrega nome do usuario salvo localmente.
   useEffect(() => {
     let active = true;
     (async () => {
@@ -51,7 +55,6 @@ export function HomeScreen() {
           <Text style={styles.logoutText}>Sair</Text>
         </Pressable>
 
-        {/* Área branca (painel) */}
         <View style={styles.actionsArea}>
           <View style={styles.actionsAreaBackground} />
           <ActionCard

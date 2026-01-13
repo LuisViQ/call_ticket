@@ -1,5 +1,6 @@
 import { StyleSheet } from "react-native";
 
+// Estilos da tela inicial.
 export const styles = StyleSheet.create({
   container: {
     flex: 1,

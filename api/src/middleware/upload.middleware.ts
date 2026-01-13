@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import multer from "multer";
 
-const uploadDir = path.resolve(process.cwd(), "uploads");
+const uploadDir = path.resolve(process.cwd(), "ticket_attachments");
 
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });

@@ -8,6 +8,7 @@ type AppStackParamList = {
   TicketDetailScreen: { ticket: TicketItem };
 };
 
+// Normaliza URLs de anexos para uso no Image.
 function resolveTicketUrl(url?: string | null) {
   if (!url) {
     return null;
@@ -25,10 +26,22 @@ function resolveTicketUrl(url?: string | null) {
   return base ? `${base}${path}` : path;
 }
 
+// Tela de detalhes do chamado.
 export default function TicketDetailScreen() {
   const route = useRoute<RouteProp<AppStackParamList, "TicketDetailScreen">>();
   const { ticket } = route.params;
-  const imageUrl = resolveTicketUrl(ticket.url);
+  // Monta a lista de URLs de anexos (campo attachments ou url unica).
+  const attachmentUrls =
+    ticket.attachments
+      ?.map((attachment) => attachment?.file_url)
+      .filter((url): url is string => Boolean(url)) || [];
+  if (attachmentUrls.length === 0 && ticket.url) {
+    attachmentUrls.push(ticket.url);
+  }
+  // Normaliza os caminhos para URLs validas.
+  const imageUrls = attachmentUrls
+    .map((url) => resolveTicketUrl(url))
+    .filter((url): url is string => Boolean(url));
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -56,8 +69,12 @@ export default function TicketDetailScreen() {
 
       <View style={styles.section}>
         <Text style={styles.label}>Imagem</Text>
-        {imageUrl ? (
-          <Image source={{ uri: imageUrl }} style={styles.image} />
+        {imageUrls.length > 0 ? (
+          <View>
+            {imageUrls.map((url, index) => (
+              <Image key={`${ticket.id}-${index}`} source={{ uri: url }} style={styles.image} />
+            ))}
+          </View>
         ) : (
           <Text style={styles.emptyText}>Sem imagem.</Text>
         )}

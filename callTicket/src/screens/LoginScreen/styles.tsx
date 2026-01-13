@@ -1,5 +1,6 @@
 import { StyleSheet } from "react-native";
 
+// Estilos da tela de login.
 export const styles = StyleSheet.create({
   flex: { flex: 1 },
   root: {
@@ -28,7 +29,7 @@ export const styles = StyleSheet.create({
     maxWidth: 420,
   },
   title: {
-    fontSize: 44, // ~2.75rem
+    fontSize: 44,
     fontWeight: "800",
     letterSpacing: -0.5,
     marginBottom: 24,
@@ -63,13 +64,13 @@ export const styles = StyleSheet.create({
   },
   input: {
     paddingVertical: 16,
-    paddingLeft: 48, // espaço do ícone
+    paddingLeft: 48,
     paddingRight: 16,
     color: "#4b5563",
     fontSize: 16,
   },
   inputWithRightIcon: {
-    paddingRight: 48, // espaço do olho
+    paddingRight: 48,
   },
   rightIconButton: {
     position: "absolute",

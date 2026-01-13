@@ -7,7 +7,7 @@ export function uploadImageController(req: Request, res: Response) {
     return res.status(400).json({ ok: false, error: "Image file is required" });
   }
 
-  const relativePath = path.posix.join("uploads", file.filename);
+  const relativePath = path.posix.join("ticket_attachments", file.filename);
   return res.status(201).json({
     ok: true,
     data: {

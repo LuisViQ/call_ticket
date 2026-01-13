@@ -16,12 +16,14 @@ import loginService from "../../services/auth.service";
 import { storeJwtToken, storeUserData } from "../../utils/utils";
 import { useAuth } from "../../contexts/AuthContext";
 
+// Tela de login do app.
 export function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { setIsAuth } = useAuth();
+  // Envia credenciais e salva token no storage.
   async function handleLogin() {
     if (!email || !password) {
       Alert.alert("Erro", "Preencha email e senha.");

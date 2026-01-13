@@ -1,11 +1,14 @@
+// Helpers para ler token e dados do usuario local.
 import { getJwtToken, getUserData } from "../utils/utils";
 
+// Estrutura da resposta de login da API.
 export interface loginResponse {
   data: {
     token: string;
     user: { id: number; name: string; email: string; created_at: Date };
   };
 }
+// Faz login e retorna token e dados do usuario.
 export default async function loginService(
   email: string,
   password: string
@@ -17,6 +20,7 @@ export default async function loginService(
   const baseUrl = apiUrl.endsWith("/") ? apiUrl : `${apiUrl}/`;
 
   try {
+    // Envia credenciais para a API.
     const response = await fetch(`${baseUrl}auth/login`, {
       method: "POST",
       headers: {
@@ -35,6 +39,7 @@ export default async function loginService(
     throw error;
   }
 }
+// Valida o token atual consultando o endpoint /auth/me.
 export async function verifyToken(): Promise<boolean> {
   try {
     const token = await getJwtToken();
