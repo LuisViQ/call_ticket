@@ -1,32 +1,60 @@
 import React, { useEffect, useState } from "react";
-import { SafeAreaView, Text, View, Pressable } from "react-native";
+import { FlatList, Pressable, SafeAreaView, Text, View } from "react-native";
 
 import { styles } from "./styles";
 import { useAuth } from "../../contexts/AuthContext";
 import { getUserData, removeJwtToken } from "../../utils/utils";
-import { ActionCard } from "../../components/ActionCard";
 import { useNavigation } from "@react-navigation/native";
+import {
+  CardGridContentListProvider,
+  useCardGridContentList,
+} from "../../contexts/CardGridContentListContext";
+import type { TicketItem } from "../../services/tickets.service";
 
 import type { StackNavigationProp } from "@react-navigation/stack";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 // Tipos de navegacao usados na home.
 type AppStackParamList = {
   Home: undefined;
   NewTicketScreen: undefined;
-  CallScreen: undefined;
-  EditTicketScreen: undefined;
+  TicketDetailScreen: { ticket: TicketItem };
 };
 
-// Tela inicial com atalhos de chamados.
-export function HomeScreen() {
-  const { setIsAuth } = useAuth();
+function getStatusStyle(status: TicketItem["status"]) {
+  switch (status) {
+    case "AGUARDANDO":
+      return { pill: styles.statusPillWaiting, text: styles.statusTextWaiting };
+    case "EM_ATENDIMENTO":
+      return {
+        pill: styles.statusPillInProgress,
+        text: styles.statusTextInProgress,
+      };
+    case "CANCELADO":
+      return {
+        pill: styles.statusPillCanceled,
+        text: styles.statusTextCanceled,
+      };
+    case "ENCERRADO":
+      return { pill: styles.statusPillClosed, text: styles.statusTextClosed };
+    default:
+      return { pill: styles.statusPill, text: styles.statusText };
+  }
+}
+
+function HomeScreenContent() {
+  const { setIsAuth, isOffline } = useAuth();
+  const { tickets, isLoading, error, refreshTickets } =
+    useCardGridContentList();
   const [userName, setUserName] = useState<string | null>(null);
   const navigation = useNavigation<StackNavigationProp<AppStackParamList>>();
+
   // Remove auth local e encerra sessao.
   function handleLogout() {
     setIsAuth(false);
     removeJwtToken();
   }
+
   // Carrega nome do usuario salvo localmente.
   useEffect(() => {
     let active = true;
@@ -44,44 +72,118 @@ export function HomeScreen() {
       active = false;
     };
   }, []);
+
+  const renderEmptyState = () => {
+    if (isLoading) {
+      return <Text style={styles.stateText}>Carregando chamados...</Text>;
+    }
+    if (error) {
+      return <Text style={styles.stateText}>{error}</Text>;
+    }
+    return <Text style={styles.stateText}>Nenhum chamado encontrado.</Text>;
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.screen}>
-        <View style={styles.header}>
-          <Text style={styles.welcome}>Bem-vindo(a)</Text>
-          <Text style={styles.userName}>{userName}</Text>
+      <View style={styles.header}>
+        <View style={styles.headerRow}>
+          <View>
+            <Text style={styles.welcome}>Bem-vindo(a)</Text>
+            <Text style={styles.userName}>{userName}</Text>
+          </View>
+          <Pressable style={styles.logoutButton} onPress={handleLogout}>
+            <MaterialIcons name="logout" size={18} style={styles.logoutIcon} />
+            <Text style={styles.logoutText}>Sair</Text>
+          </Pressable>
         </View>
-        <Pressable onPress={handleLogout} hitSlop={12}>
-          <Text style={styles.logoutText}>Sair</Text>
-        </Pressable>
+        {isOffline ? (
+          <View style={styles.errorArea}>
+            <MaterialIcons name="wifi-off" size={14} style={styles.errorIcon} />
+            <Text style={styles.errorText}>Voce esta offline.</Text>
+          </View>
+        ) : null}
+      </View>
 
-        <View style={styles.actionsArea}>
-          <View style={styles.actionsAreaBackground} />
-          <ActionCard
-            top={30}
-            title="Abrir um novo chamado"
-            onPress={() => {
-              navigation.navigate("NewTicketScreen");
-            }}
-          />
-
-          <ActionCard
-            top={136}
-            title={"Ver histórico \n" + "de chamados"}
-            onPress={() => {
-              navigation.navigate("CallScreen");
-            }}
-          />
-
-          <ActionCard
-            top={247}
-            title="Editar chamados"
-            onPress={() => {
-              navigation.navigate("EditTicketScreen");
-            }}
-          />
-        </View>
+      <View style={styles.content}>
+        <FlatList
+          data={tickets}
+          keyExtractor={(item) => String(item.id)}
+          contentContainerStyle={styles.listContent}
+          ListHeaderComponent={
+            <View style={styles.listHeader}>
+              <Pressable
+                style={[
+                  styles.primaryButton,
+                  // Estilo condicional para quando estiver desabilitado
+                  isOffline
+                    ? styles.primaryButtonDisabled
+                    : styles.primaryButtonEnabled,
+                ]}
+                onPress={() => navigation.navigate("NewTicketScreen")}
+                disabled={isOffline}
+              >
+                <MaterialIcons
+                  name="add-circle-outline"
+                  size={18}
+                  style={styles.primaryButtonIcon}
+                />
+                <Text style={styles.primaryButtonText}>
+                  Abrir um novo chamado
+                </Text>
+              </Pressable>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Historico de chamados</Text>
+                <Pressable onPress={refreshTickets}>
+                  <Text style={styles.sectionAction}>Atualizar</Text>
+                </Pressable>
+              </View>
+            </View>
+          }
+          ListEmptyComponent={renderEmptyState}
+          ItemSeparatorComponent={() => <View style={styles.cardSeparator} />}
+          renderItem={({ item }) => {
+            const statusStyle = getStatusStyle(item.status);
+            return (
+              <Pressable
+                style={styles.ticketCard}
+                onPress={() =>
+                  navigation.navigate("TicketDetailScreen", { ticket: item })
+                }
+              >
+                <View style={styles.ticketHeader}>
+                  <Text style={styles.ticketTitle}>Chamado #{item.id}</Text>
+                  <View style={[styles.statusPill, statusStyle.pill]}>
+                    <Text style={[styles.statusText, statusStyle.text]}>
+                      {item.status}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={styles.ticketDescription} numberOfLines={2}>
+                  {item.description}
+                </Text>
+                <Text style={styles.ticketMeta}>
+                  Tipo: {item.ticket_type || "Nao informado"}
+                </Text>
+                <Text style={styles.ticketMeta}>
+                  Area: {item.area_type || "Nao informado"}
+                </Text>
+              </Pressable>
+            );
+          }}
+          refreshing={isLoading}
+          onRefresh={refreshTickets}
+          showsVerticalScrollIndicator={false}
+        />
       </View>
     </SafeAreaView>
+  );
+}
+
+// Tela inicial com atalhos de chamados.
+export function HomeScreen() {
+  return (
+    <CardGridContentListProvider>
+      <HomeScreenContent />
+    </CardGridContentListProvider>
   );
 }

@@ -14,13 +14,14 @@ export default async function loginService(
   password: string
 ): Promise<loginResponse> {
   const apiUrl = process.env.EXPO_PUBLIC_BASE_URL;
-  if (!apiUrl) {
-    throw new Error("EXPO_PUBLIC_BASE_URL not set");
-  }
+  if (!apiUrl) throw new Error("EXPO_PUBLIC_BASE_URL not set");
   const baseUrl = apiUrl.endsWith("/") ? apiUrl : `${apiUrl}/`;
 
+  const timeoutMs = 5000;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
   try {
-    // Envia credenciais para a API.
     const response = await fetch(`${baseUrl}auth/login`, {
       method: "POST",
       headers: {
@@ -28,37 +29,64 @@ export default async function loginService(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ email, password }),
+      signal: controller.signal,
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+      const message =
+        typeof data?.message === "string"
+          ? data.message
+          : `HTTP ${response.status}`;
+      throw new Error(message);
     }
-    return await response.json();
+
+    return data;
   } catch (error) {
-    console.error(error);
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error("Tempo de conexão esgotado. Tente novamente.");
+    }
     throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 // Valida o token atual consultando o endpoint /auth/me.
-export async function verifyToken(): Promise<boolean> {
-  try {
-    const token = await getJwtToken();
-    const data = await getUserData();
-    console.log(data);
-    if (!token) return false;
-    const apiUrl = process.env.EXPO_PUBLIC_BASE_URL;
-    if (!apiUrl) return false;
-    const baseUrl = apiUrl.endsWith("/") ? apiUrl : `${apiUrl}/`;
+export type VerifyTokenResult = {
+  isAuth: boolean;
+  isOffline: boolean;
+};
 
+export async function verifyToken(): Promise<VerifyTokenResult> {
+  const token = await getJwtToken();
+  const userData = await getUserData();
+  const hasCachedUser = Boolean(userData);
+  console.log(userData);
+  if (!token) return { isAuth: false, isOffline: false };
+  const apiUrl = process.env.EXPO_PUBLIC_BASE_URL;
+  if (!apiUrl) return { isAuth: false, isOffline: false };
+  const baseUrl = apiUrl.endsWith("/") ? apiUrl : `${apiUrl}/`;
+
+  const timeoutMs = 8000;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
     const res = await fetch(`${baseUrl}auth/me`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
+      signal: controller.signal,
     });
 
-    return res.ok;
+    return { isAuth: res.ok, isOffline: false };
   } catch (error) {
-    console.error(error);
-    return false;
+    if (!(error instanceof Error && error.name === "AbortError")) {
+      console.error(error);
+    }
+    return { isAuth: hasCachedUser, isOffline: true };
+  } finally {
+    clearTimeout(timeoutId);
   }
 }

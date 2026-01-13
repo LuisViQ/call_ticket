@@ -12,6 +12,7 @@ import {
   type TicketItem,
   type TicketListResponse,
 } from "../services/tickets.service";
+import { useAuth } from "./AuthContext";
 
 // Valores expostos para a lista de chamados.
 type CardGridContentListContextValue = {
@@ -31,6 +32,7 @@ export function CardGridContentListProvider({
 }: {
   children: React.ReactNode;
 }) {
+  const { isOffline } = useAuth();
   // Estado principal da lista de chamados.
   const [tickets, setTickets] = useState<TicketItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,6 +50,15 @@ export function CardGridContentListProvider({
   // Busca os chamados e atualiza estado.
   const refreshTickets = useCallback(async () => {
     if (!isMountedRef.current) {
+      return;
+    }
+    if (isOffline) {
+      if (tickets.length === 0) {
+        setError("Voce esta offline. Conecte-se para carregar seus chamados.");
+      } else {
+        setError(null);
+      }
+      setIsLoading(false);
       return;
     }
     setIsLoading(true);
@@ -75,7 +86,7 @@ export function CardGridContentListProvider({
         setIsLoading(false);
       }
     }
-  }, []);
+  }, [isOffline, tickets.length]);
 
   // Carrega os chamados ao montar.
   useEffect(() => {

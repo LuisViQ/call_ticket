@@ -1,14 +1,25 @@
 ﻿import React, { useState } from "react";
-import { Alert, Image, Pressable, Text, TextInput, View } from "react-native";
+import {
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { styles } from "./styles";
 import ticketService, {
   uploadTicketImage,
 } from "../../services/tickets.service";
 import * as ImagePicker from "expo-image-picker";
+import { useAuth } from "../../contexts/AuthContext";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 // Tela para abertura de novo chamado.
 export default function NewTicketScreen() {
+  const { setIsAuth, isOffline } = useAuth();
   const [description, setDescription] = useState("");
   const [callType, setCallType] = useState("");
   const [callArea, setCallArea] = useState("");
@@ -77,7 +88,13 @@ export default function NewTicketScreen() {
   }
 
   return (
-    <View style={styles.screen}>
+    <ScrollView style={styles.screen}>
+      {isOffline ? (
+        <View style={styles.errorArea}>
+          <MaterialIcons name="wifi-off" size={14} style={styles.errorIcon} />
+          <Text style={styles.errorText}>Voce esta offline.</Text>
+        </View>
+      ) : null}
       <View style={styles.form}>
         <View style={styles.field}>
           <Text style={styles.pickerLabel}>Descrição do Chamado</Text>
@@ -87,6 +104,7 @@ export default function NewTicketScreen() {
             placeholder="Descreva o problema ou solicitacao"
             placeholderTextColor="#bdbdbd"
             style={styles.input}
+            multiline={true}
           />
         </View>
 
@@ -159,6 +177,6 @@ export default function NewTicketScreen() {
           </Text>
         </Pressable>
       </View>
-    </View>
+    </ScrollView>
   );
 }

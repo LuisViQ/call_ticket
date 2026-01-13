@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  Alert,
   View,
   Text,
   TextInput,
@@ -12,9 +11,13 @@ import {
 } from "react-native";
 import { styles } from "./styles";
 import { Feather } from "@expo/vector-icons";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import loginService from "../../services/auth.service";
 import { storeJwtToken, storeUserData } from "../../utils/utils";
 import { useAuth } from "../../contexts/AuthContext";
+
+const MAX_EMAIL_LENGTH = 254;
+const MAX_PASSWORD_LENGTH = 128;
 
 // Tela de login do app.
 export function LoginScreen() {
@@ -22,22 +25,32 @@ export function LoginScreen() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { setIsAuth } = useAuth();
+  const [loginError, setLoginError] = useState("");
+  const { setIsAuth, isOffline } = useAuth();
   // Envia credenciais e salva token no storage.
   async function handleLogin() {
     if (!email || !password) {
-      Alert.alert("Erro", "Preencha email e senha.");
+      setLoginError("Preencha email e senha.");
       return;
     }
     try {
       setIsLoading(true);
+      setLoginError("");
       const response = await loginService(email, password);
       await storeJwtToken(response.data.token);
       await storeUserData(response);
       setIsAuth(true);
     } catch (error) {
-      console.error(error);
-      Alert.alert("Falha no login", "Verifique seu email ou senha");
+      // trata caso ocorra algum erro no login
+      const message =
+        error instanceof Error ? error.message : "Verifique seu email ou senha";
+      if (message === "HTTP 401") {
+        setLoginError(
+          `Verifique as informações da conta que você inseriu \n e tente novamente.`
+        );
+      } else {
+        setLoginError(message);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -72,10 +85,14 @@ export function LoginScreen() {
 
               <TextInput
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={(value) => {
+                  setEmail(value);
+                  if (loginError) setLoginError("");
+                }}
                 placeholder="E-mail"
                 placeholderTextColor="#9ca3af"
                 keyboardType="email-address"
+                maxLength={MAX_EMAIL_LENGTH}
                 autoCapitalize="none"
                 autoCorrect={false}
                 style={styles.input}
@@ -89,10 +106,14 @@ export function LoginScreen() {
 
               <TextInput
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={(value) => {
+                  setPassword(value);
+                  if (loginError) setLoginError("");
+                }}
                 placeholder="Senha"
                 placeholderTextColor="#9ca3af"
                 secureTextEntry={!showPassword}
+                maxLength={MAX_PASSWORD_LENGTH}
                 autoCapitalize="none"
                 autoCorrect={false}
                 style={[styles.input, styles.inputWithRightIcon]}
@@ -110,7 +131,26 @@ export function LoginScreen() {
                 />
               </Pressable>
             </View>
-
+            {isOffline ? (
+              <View style={styles.errorArea}>
+                <MaterialIcons
+                  name="wifi-off"
+                  size={14}
+                  style={styles.errorIcon}
+                />
+                <Text style={styles.errorText}> Voce esta offline.</Text>
+              </View>
+            ) : null}
+            {loginError ? (
+              <View style={styles.errorArea}>
+                <MaterialIcons
+                  name="error-outline"
+                  size={14}
+                  style={styles.errorIcon}
+                />
+                <Text style={styles.errorText}> {loginError}</Text>
+              </View>
+            ) : null}
             <View style={styles.buttonArea}>
               <TouchableOpacity
                 activeOpacity={0.85}

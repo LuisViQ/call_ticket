@@ -36,9 +36,10 @@ export const styles = StyleSheet.create({
   },
 
   input: {
-    height: 39,
+    height: 150,
     paddingHorizontal: 10,
     fontSize: 12,
+    textAlignVertical: "top",
     color: "#000",
     backgroundColor: "#F6F6F6",
     borderWidth: 1,
@@ -108,5 +109,27 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     color: "#fff",
     fontFamily: "InclusiveSans-Regular",
+  },
+  errorArea: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    marginTop: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: "rgba(239, 68, 68, 0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(239, 68, 68, 0.35)",
+  },
+  errorText: {
+    color: "#fecaca",
+    fontSize: 12,
+    lineHeight: 16,
+    marginLeft: 6,
+    textAlign: "left",
+  },
+  errorIcon: {
+    color: "#fecaca",
   },
 });

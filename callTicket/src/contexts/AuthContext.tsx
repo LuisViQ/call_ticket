@@ -17,7 +17,9 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 // Contrato dos valores expostos pelo contexto.
 type AuthContextValue = {
   isAuth: boolean | null;
+  isOffline: boolean;
   setIsAuth: (value: boolean) => void;
+  setIsOffline: (value: boolean) => void;
   refreshAuth: () => Promise<void>;
 };
 
@@ -27,11 +29,13 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 // Provider que envolve a arvore do app.
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuth, setIsAuth] = useState<boolean | null>(null);
+  const [isOffline, setIsOffline] = useState(false);
 
   // Revalida o token no backend.
   const refreshAuth = useCallback(async () => {
     const result = await verifyToken();
-    setIsAuth(result);
+    setIsAuth(result.isAuth);
+    setIsOffline(result.isOffline);
   }, []);
 
   // Executa a validacao inicial ao montar.
@@ -48,8 +52,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Memoiza o valor do contexto para reduzir renders.
   const value = useMemo(
-    () => ({ isAuth, setIsAuth, refreshAuth }),
-    [isAuth, refreshAuth]
+    () => ({ isAuth, isOffline, setIsAuth, setIsOffline, refreshAuth }),
+    [isAuth, isOffline, refreshAuth]
   );
 
   // Renderiza o provider e repassa o valor.

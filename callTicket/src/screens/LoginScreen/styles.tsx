@@ -52,7 +52,8 @@ export const styles = StyleSheet.create({
     backgroundColor: "#f3f4f6",
     borderRadius: 16,
     marginBottom: 16,
-    minHeight: 56,
+    width: 350,
+    height: 56,
     justifyContent: "center",
   },
   leftIcon: {
@@ -94,5 +95,17 @@ export const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 16,
     fontWeight: "600",
+  },
+  errorArea: {
+    flexDirection: "row",
+  },
+  errorText: {
+    color: "#b91c1c",
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: "left",
+  },
+  errorIcon: {
+    color: "#b91c1c",
   },
 });
