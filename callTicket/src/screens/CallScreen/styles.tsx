@@ -113,23 +113,16 @@ export const styles = StyleSheet.create({
   errorArea: {
     flexDirection: "row",
     alignItems: "center",
-    alignSelf: "flex-start",
-    marginTop: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: "rgba(239, 68, 68, 0.12)",
-    borderWidth: 1,
-    borderColor: "rgba(239, 68, 68, 0.35)",
+    marginTop: 12,
   },
   errorText: {
-    color: "#fecaca",
-    fontSize: 12,
-    lineHeight: 16,
+    color: "#b91c1c",
+    fontSize: 13,
+    lineHeight: 18,
     marginLeft: 6,
     textAlign: "left",
   },
   errorIcon: {
-    color: "#fecaca",
+    color: "#b91c1c",
   },
 });

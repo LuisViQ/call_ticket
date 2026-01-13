@@ -19,12 +19,13 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 // Tela para abertura de novo chamado.
 export default function NewTicketScreen() {
-  const { setIsAuth, isOffline } = useAuth();
+  const { isOffline } = useAuth();
   const [description, setDescription] = useState("");
   const [callType, setCallType] = useState("");
   const [callArea, setCallArea] = useState("");
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
 
   // Seleciona imagem da galeria.
   async function handlePickImage() {
@@ -60,12 +61,17 @@ export default function NewTicketScreen() {
 
   // Envia o chamado para a API.
   async function handleSubmit() {
+    if (isOffline) {
+      setFormError("Voce esta offline. Conecte-se para enviar o chamado.");
+      return;
+    }
     if (!description || !callArea || !callType) {
-      Alert.alert("Erro", "Preencha descricao, area e tipo");
+      setFormError("Preencha descricao, area e tipo.");
       return;
     }
     try {
       setIsSubmitting(true);
+      setFormError("");
       let imageUrl: string | undefined;
       if (imageUri) {
         const upload = await uploadTicketImage(imageUri);
@@ -81,7 +87,11 @@ export default function NewTicketScreen() {
       Alert.alert("Sucesso", "Chamado enviado com sucesso!");
     } catch (error) {
       console.error(error);
-      Alert.alert("Erro", "Não foi possivel enviar o chamado.");
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Nao foi possivel enviar o chamado.";
+      setFormError(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -89,18 +99,15 @@ export default function NewTicketScreen() {
 
   return (
     <ScrollView style={styles.screen}>
-      {isOffline ? (
-        <View style={styles.errorArea}>
-          <MaterialIcons name="wifi-off" size={14} style={styles.errorIcon} />
-          <Text style={styles.errorText}>Voce esta offline.</Text>
-        </View>
-      ) : null}
       <View style={styles.form}>
         <View style={styles.field}>
           <Text style={styles.pickerLabel}>Descrição do Chamado</Text>
           <TextInput
             value={description}
-            onChangeText={setDescription}
+            onChangeText={(value) => {
+              setDescription(value);
+              if (formError) setFormError("");
+            }}
             placeholder="Descreva o problema ou solicitacao"
             placeholderTextColor="#bdbdbd"
             style={styles.input}
@@ -113,7 +120,10 @@ export default function NewTicketScreen() {
           <View style={styles.pickerBox}>
             <Picker
               selectedValue={callType}
-              onValueChange={setCallType}
+              onValueChange={(value) => {
+                setCallType(value);
+                if (formError) setFormError("");
+              }}
               style={styles.picker}
             >
               <Picker.Item label="Selecione..." value="" color="#bdbdbd" />
@@ -130,7 +140,10 @@ export default function NewTicketScreen() {
           <View style={styles.pickerBox}>
             <Picker
               selectedValue={callArea}
-              onValueChange={setCallArea}
+              onValueChange={(value) => {
+                setCallArea(value);
+                if (formError) setFormError("");
+              }}
               style={styles.picker}
             >
               <Picker.Item label="Selecione..." value="" color="#bdbdbd" />
@@ -176,6 +189,16 @@ export default function NewTicketScreen() {
             {isSubmitting ? "Enviando..." : "Enviar"}
           </Text>
         </Pressable>
+        {formError ? (
+          <View style={styles.errorArea}>
+            <MaterialIcons
+              name="error-outline"
+              size={14}
+              style={styles.errorIcon}
+            />
+            <Text style={styles.errorText}>{formError}</Text>
+          </View>
+        ) : null}
       </View>
     </ScrollView>
   );

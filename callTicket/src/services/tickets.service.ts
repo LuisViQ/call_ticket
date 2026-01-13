@@ -76,6 +76,9 @@ export default async function ticketService(
   }
   const baseUrl = apiUrl.endsWith("/") ? apiUrl : `${apiUrl}/`;
   const token = await getAuthToken();
+  const timeoutMs = 10000;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     // Monta o payload de criacao do chamado.
@@ -98,6 +101,7 @@ export default async function ticketService(
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(body),
+      signal: controller.signal,
     });
 
     if (!response.ok) {
@@ -105,8 +109,13 @@ export default async function ticketService(
     }
     return await response.json();
   } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error("Tempo de conexao esgotado. Tente novamente.");
+    }
     console.error(error);
     throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
@@ -219,6 +228,9 @@ export async function uploadTicketImage(uri: string): Promise<UploadResponse> {
   const filename = uri.split("/").pop() || `upload-${Date.now()}.jpg`;
   const match = /\.(\w+)$/.exec(filename);
   const type = match ? `image/${match[1]}` : "image/jpeg";
+  const timeoutMs = 10000;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   // Monta o FormData com o arquivo da imagem.
   const formData = new FormData();
@@ -240,6 +252,7 @@ export async function uploadTicketImage(uri: string): Promise<UploadResponse> {
         Authorization: `Bearer ${token}`,
       },
       body: formData,
+      signal: controller.signal,
     });
 
     if (!response.ok) {
@@ -255,7 +268,12 @@ export async function uploadTicketImage(uri: string): Promise<UploadResponse> {
     }
     return normalizeUploadResponse(payload);
   } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error("Tempo de conexao esgotado. Tente novamente.");
+    }
     console.error(error);
     throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
