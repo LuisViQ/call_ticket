@@ -48,6 +48,12 @@ export type UploadResponse = {
   path?: string;
 };
 
+function createTimeoutError() {
+  const error = new Error("Tempo de conexao esgotado. Tente novamente.");
+  error.name = "TimeoutError";
+  return error;
+}
+
 // Recupera o token JWT armazenado localmente.
 async function getAuthToken(): Promise<string> {
   const token = await getJwtToken();
@@ -76,7 +82,7 @@ export default async function ticketService(
   }
   const baseUrl = apiUrl.endsWith("/") ? apiUrl : `${apiUrl}/`;
   const token = await getAuthToken();
-  const timeoutMs = 10000;
+  const timeoutMs = 5000;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -110,7 +116,7 @@ export default async function ticketService(
     return await response.json();
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
-      throw new Error("Tempo de conexao esgotado. Tente novamente.");
+      throw createTimeoutError();
     }
     console.error(error);
     throw error;
@@ -234,14 +240,11 @@ export async function uploadTicketImage(uri: string): Promise<UploadResponse> {
 
   // Monta o FormData com o arquivo da imagem.
   const formData = new FormData();
-  formData.append(
-    "image",
-    {
-      uri,
-      name: filename,
-      type,
-    } as any
-  );
+  formData.append("image", {
+    uri,
+    name: filename,
+    type,
+  } as any);
 
   try {
     // Envia o arquivo para o endpoint de upload.
@@ -269,7 +272,7 @@ export async function uploadTicketImage(uri: string): Promise<UploadResponse> {
     return normalizeUploadResponse(payload);
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
-      throw new Error("Tempo de conexao esgotado. Tente novamente.");
+      throw createTimeoutError();
     }
     console.error(error);
     throw error;

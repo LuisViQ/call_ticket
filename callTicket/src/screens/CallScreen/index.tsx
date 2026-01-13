@@ -25,7 +25,10 @@ export default function NewTicketScreen() {
   const [callArea, setCallArea] = useState("");
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formError, setFormError] = useState("");
+  const [descriptionError, setDescriptionError] = useState("");
+  const [callTypeError, setCallTypeError] = useState("");
+  const [callAreaError, setCallAreaError] = useState("");
+  const [submitError, setSubmitError] = useState("");
 
   // Seleciona imagem da galeria.
   async function handlePickImage() {
@@ -62,16 +65,29 @@ export default function NewTicketScreen() {
   // Envia o chamado para a API.
   async function handleSubmit() {
     if (isOffline) {
-      setFormError("Voce esta offline. Conecte-se para enviar o chamado.");
+      setSubmitError("Voce esta offline. Conecte-se para enviar o chamado.");
       return;
     }
-    if (!description || !callArea || !callType) {
-      setFormError("Preencha descricao, area e tipo.");
+    let hasError = false;
+    if (!description) {
+      setDescriptionError("Informe a descricao.");
+      hasError = true;
+    }
+    if (!callType) {
+      setCallTypeError("Selecione o tipo.");
+      hasError = true;
+    }
+    if (!callArea) {
+      setCallAreaError("Selecione a area.");
+      hasError = true;
+    }
+    if (hasError) {
+      setSubmitError("");
       return;
     }
     try {
       setIsSubmitting(true);
-      setFormError("");
+      setSubmitError("");
       let imageUrl: string | undefined;
       if (imageUri) {
         const upload = await uploadTicketImage(imageUri);
@@ -86,12 +102,14 @@ export default function NewTicketScreen() {
       setImageUri(null);
       Alert.alert("Sucesso", "Chamado enviado com sucesso!");
     } catch (error) {
-      console.error(error);
+      if (!(error instanceof Error && error.name === "TimeoutError")) {
+        console.error(error);
+      }
       const message =
         error instanceof Error
           ? error.message
           : "Nao foi possivel enviar o chamado.";
-      setFormError(message);
+      setSubmitError(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -106,13 +124,24 @@ export default function NewTicketScreen() {
             value={description}
             onChangeText={(value) => {
               setDescription(value);
-              if (formError) setFormError("");
+              if (descriptionError) setDescriptionError("");
+              if (submitError) setSubmitError("");
             }}
             placeholder="Descreva o problema ou solicitacao"
             placeholderTextColor="#bdbdbd"
             style={styles.input}
             multiline={true}
           />
+          {descriptionError ? (
+            <View style={styles.errorArea}>
+              <MaterialIcons
+                name="error-outline"
+                size={14}
+                style={styles.errorIcon}
+              />
+              <Text style={styles.errorText}>{descriptionError}</Text>
+            </View>
+          ) : null}
         </View>
 
         <View style={styles.field}>
@@ -122,7 +151,8 @@ export default function NewTicketScreen() {
               selectedValue={callType}
               onValueChange={(value) => {
                 setCallType(value);
-                if (formError) setFormError("");
+                if (callTypeError) setCallTypeError("");
+                if (submitError) setSubmitError("");
               }}
               style={styles.picker}
             >
@@ -133,6 +163,16 @@ export default function NewTicketScreen() {
               <Picker.Item label="Reclamacao" value="reclamacao" />
             </Picker>
           </View>
+          {callTypeError ? (
+            <View style={styles.errorArea}>
+              <MaterialIcons
+                name="error-outline"
+                size={14}
+                style={styles.errorIcon}
+              />
+              <Text style={styles.errorText}>{callTypeError}</Text>
+            </View>
+          ) : null}
         </View>
 
         <View style={styles.field}>
@@ -142,7 +182,8 @@ export default function NewTicketScreen() {
               selectedValue={callArea}
               onValueChange={(value) => {
                 setCallArea(value);
-                if (formError) setFormError("");
+                if (callAreaError) setCallAreaError("");
+                if (submitError) setSubmitError("");
               }}
               style={styles.picker}
             >
@@ -153,6 +194,16 @@ export default function NewTicketScreen() {
               <Picker.Item label="Operacoes" value="operacoes" />
             </Picker>
           </View>
+          {callAreaError ? (
+            <View style={styles.errorArea}>
+              <MaterialIcons
+                name="error-outline"
+                size={14}
+                style={styles.errorIcon}
+              />
+              <Text style={styles.errorText}>{callAreaError}</Text>
+            </View>
+          ) : null}
         </View>
 
         <View style={styles.field}>
@@ -189,14 +240,14 @@ export default function NewTicketScreen() {
             {isSubmitting ? "Enviando..." : "Enviar"}
           </Text>
         </Pressable>
-        {formError ? (
+        {submitError ? (
           <View style={styles.errorArea}>
             <MaterialIcons
               name="error-outline"
               size={14}
               style={styles.errorIcon}
             />
-            <Text style={styles.errorText}>{formError}</Text>
+            <Text style={styles.errorText}>{submitError}</Text>
           </View>
         ) : null}
       </View>
