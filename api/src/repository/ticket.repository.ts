@@ -59,7 +59,12 @@ export async function insertTicket(
   url?: string
 ) {
   const columns = ["user_id", "title", "description", "status"];
-  const values: Array<number | string | null> = [userId, title, description, status];
+  const values: Array<number | string | null> = [
+    userId,
+    title,
+    description,
+    status,
+  ];
   if (ticketTypeId !== undefined) {
     columns.push("ticket_type_id");
     values.push(ticketTypeId);
@@ -84,7 +89,7 @@ export async function insertTicketImage(ticketId: number, fileUrl: string) {
   // verifica o tipo de arquivo para salvar dentro do banco de dados
   const fileType = path.extname(fileUrl).replace(".", "");
   const [result] = await pool.execute<ResultSetHeader>(
-    "INSERT INTO ticket_attachments (ticket_id, file_url, file_type) VALUES (${teste}, ?, ?)",
+    "INSERT INTO ticket_attachments (ticket_id, file_url, file_type) VALUES (?, ?, ?)",
     [ticketId, fileUrl, fileType]
   );
   return result.insertId;
