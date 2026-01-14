@@ -47,6 +47,10 @@ export const styles = StyleSheet.create({
     borderRadius: 6,
     fontFamily: "Inter-Medium",
   },
+  inputSingleLine: {
+    height: 44,
+    textAlignVertical: "center",
+  },
 
   pickerLabel: {
     fontSize: 12,

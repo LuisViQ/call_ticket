@@ -42,6 +42,23 @@ function getStatusStyle(status: TicketItem["status"]) {
   }
 }
 
+function resolveMetaLabel(
+  value: TicketItem["ticket_type"] | TicketItem["area_type"],
+  id?: number | null
+) {
+  if (!value) {
+    return id ? `ID ${id}` : "Nao informado";
+  }
+  if (typeof value === "string") {
+    return value;
+  }
+  const label = value.name || value.title;
+  if (label) {
+    return label;
+  }
+  return id ? `ID ${id}` : "Nao informado";
+}
+
 function HomeScreenContent() {
   const { setIsAuth, isOffline } = useAuth();
   const { tickets, isLoading, error, refreshTickets } =
@@ -143,6 +160,15 @@ function HomeScreenContent() {
           ItemSeparatorComponent={() => <View style={styles.cardSeparator} />}
           renderItem={({ item }) => {
             const statusStyle = getStatusStyle(item.status);
+            const titleText = item.title?.trim();
+            const ticketTypeLabel = resolveMetaLabel(
+              item.ticket_type,
+              item.ticket_type_id
+            );
+            const areaTypeLabel = resolveMetaLabel(
+              item.area_type,
+              item.area_type_id
+            );
             return (
               <Pressable
                 style={styles.ticketCard}
@@ -151,7 +177,9 @@ function HomeScreenContent() {
                 }
               >
                 <View style={styles.ticketHeader}>
-                  <Text style={styles.ticketTitle}>Chamado #{item.id}</Text>
+                  <Text style={styles.ticketTitle}>
+                    {titleText || `Chamado #${item.id}`}
+                  </Text>
                   <View style={[styles.statusPill, statusStyle.pill]}>
                     <Text style={[styles.statusText, statusStyle.text]}>
                       {item.status}
@@ -161,12 +189,8 @@ function HomeScreenContent() {
                 <Text style={styles.ticketDescription} numberOfLines={2}>
                   {item.description}
                 </Text>
-                <Text style={styles.ticketMeta}>
-                  Tipo: {item.ticket_type || "Nao informado"}
-                </Text>
-                <Text style={styles.ticketMeta}>
-                  Area: {item.area_type || "Nao informado"}
-                </Text>
+                <Text style={styles.ticketMeta}>Tipo: {ticketTypeLabel}</Text>
+                <Text style={styles.ticketMeta}>Area: {areaTypeLabel}</Text>
               </Pressable>
             );
           }}

@@ -1,5 +1,5 @@
-// Helpers para ler token e dados do usuario local.
-import { getJwtToken, getUserData } from "../utils/utils";
+// Helpers para ler token local.
+import { getJwtToken } from "../utils/utils";
 
 // Tipos usados pelo servico de chamados.
 export type TicketStatus =
@@ -8,19 +8,36 @@ export type TicketStatus =
   | "CANCELADO"
   | "ENCERRADO";
 
+export type TicketType = {
+  id: number;
+  name?: string | null;
+  title?: string | null;
+};
+
+export type AreaType = {
+  id: number;
+  name?: string | null;
+  title?: string | null;
+};
+
 export type Ticket = {
+  title: string;
   description: string;
-  ticket_type: string;
-  area_type: string;
+  status?: TicketStatus;
+  ticket_type_id: number;
+  area_type_id: number;
   url?: string | null;
 };
 
 export type TicketItem = {
   id: number;
+  title?: string | null;
   description: string;
   status: TicketStatus;
-  ticket_type: string | null;
-  area_type: string | null;
+  ticket_type_id?: number | null;
+  area_type_id?: number | null;
+  ticket_type?: TicketType | string | null;
+  area_type?: AreaType | string | null;
   url?: string | null;
   attachments?: Array<{ file_url: string }> | null;
 };
@@ -32,10 +49,10 @@ export type TicketListResponse = {
 
 export type TicketUpdatePayload = {
   status: TicketStatus;
+  title: string;
   description: string;
-  ticket_type: string | null;
-  area_type: string | null;
-  url?: string | null;
+  ticket_type_id: number;
+  area_type_id: number;
 };
 
 export type TicketUpdateResponse = {
@@ -48,10 +65,38 @@ export type UploadResponse = {
   path?: string;
 };
 
+export type TicketCreateResponse = {
+  ok: boolean;
+  data: { id: number };
+};
+
+export type TicketTypeListResponse = {
+  ok: boolean;
+  data: TicketType[];
+};
+
+export type AreaTypeListResponse = {
+  ok: boolean;
+  data: AreaType[];
+};
+
 function createTimeoutError() {
   const error = new Error("Tempo de conexao esgotado. Tente novamente.");
   error.name = "TimeoutError";
   return error;
+}
+
+function createOfflineError(message: string) {
+  const error = new Error(message);
+  error.name = "OfflineError";
+  return error;
+}
+
+function isNetworkError(error: unknown) {
+  return (
+    error instanceof TypeError &&
+    /Network request failed/i.test(error.message)
+  );
 }
 
 // Recupera o token JWT armazenado localmente.
@@ -63,36 +108,28 @@ async function getAuthToken(): Promise<string> {
   return token;
 }
 
-// Recupera o id do usuario logado.
-async function getUserId(): Promise<number> {
-  const user = await getUserData();
-  if (!user || typeof user.id !== "number") {
-    throw new Error("User id not found");
-  }
-  return user.id;
-}
-
 // Cria um novo chamado.
 export default async function ticketService(
   ticket: Ticket
-): Promise<TicketStatus> {
+): Promise<TicketCreateResponse> {
   const apiUrl = process.env.EXPO_PUBLIC_BASE_URL;
   if (!apiUrl) {
     throw new Error("EXPO_PUBLIC_BASE_URL not set");
   }
   const baseUrl = apiUrl.endsWith("/") ? apiUrl : `${apiUrl}/`;
   const token = await getAuthToken();
-  const timeoutMs = 5000;
+  const timeoutMs = 10000;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     // Monta o payload de criacao do chamado.
     const body: Record<string, unknown> = {
+      title: ticket.title,
       description: ticket.description,
-      status: "AGUARDANDO",
-      ticket_type: ticket.ticket_type,
-      area_type: ticket.area_type,
+      status: ticket.status ?? "AGUARDANDO",
+      ticket_type_id: ticket.ticket_type_id,
+      area_type_id: ticket.area_type_id,
     };
     if (ticket.url) {
       body.url = ticket.url;
@@ -118,6 +155,11 @@ export default async function ticketService(
     if (error instanceof Error && error.name === "AbortError") {
       throw createTimeoutError();
     }
+    if (isNetworkError(error)) {
+      throw createOfflineError(
+        "Voce esta offline. Conecte-se para enviar o chamado."
+      );
+    }
     console.error(error);
     throw error;
   } finally {
@@ -135,8 +177,10 @@ export async function showTicketService(
   }
   const baseUrl = apiUrl.endsWith("/") ? apiUrl : `${apiUrl}/`;
   const token = await getAuthToken();
-  const resolvedUserId = userId ?? (await getUserId());
-  const path = `tickets/${resolvedUserId}`;
+  const path = userId ? `tickets/${userId}` : "tickets";
+  const timeoutMs = 8000;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     // Busca os chamados do usuario.
@@ -147,6 +191,7 @@ export async function showTicketService(
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
+      signal: controller.signal,
     });
 
     if (!response.ok) {
@@ -154,8 +199,18 @@ export async function showTicketService(
     }
     return (await response.json()) as TicketListResponse;
   } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw createTimeoutError();
+    }
+    if (isNetworkError(error)) {
+      throw createOfflineError(
+        "Voce esta offline. Conecte-se para carregar os chamados."
+      );
+    }
     console.error(error);
     throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
@@ -170,18 +225,19 @@ export async function updateTicketService(
   }
   const baseUrl = apiUrl.endsWith("/") ? apiUrl : `${apiUrl}/`;
   const token = await getAuthToken();
+  const timeoutMs = 10000;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     // Monta o payload de atualizacao do chamado.
     const body: Record<string, unknown> = {
       status: payload.status,
+      title: payload.title,
       description: payload.description,
-      ticket_type: payload.ticket_type,
-      area_type: payload.area_type,
+      ticket_type_id: payload.ticket_type_id,
+      area_type_id: payload.area_type_id,
     };
-    if (payload.url) {
-      body.url = payload.url;
-    }
 
     // Envia a atualizacao para a API.
     const response = await fetch(`${baseUrl}tickets/${ticketId}`, {
@@ -192,6 +248,7 @@ export async function updateTicketService(
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(body),
+      signal: controller.signal,
     });
 
     if (!response.ok) {
@@ -199,8 +256,104 @@ export async function updateTicketService(
     }
     return (await response.json()) as TicketUpdateResponse;
   } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw createTimeoutError();
+    }
+    if (isNetworkError(error)) {
+      throw createOfflineError(
+        "Voce esta offline. Conecte-se para atualizar o chamado."
+      );
+    }
     console.error(error);
     throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+// Lista tipos de ticket cadastrados.
+export async function getTicketTypes(): Promise<TicketTypeListResponse> {
+  const apiUrl = process.env.EXPO_PUBLIC_BASE_URL;
+  if (!apiUrl) {
+    throw new Error("EXPO_PUBLIC_BASE_URL not set");
+  }
+  const baseUrl = apiUrl.endsWith("/") ? apiUrl : `${apiUrl}/`;
+  const token = await getAuthToken();
+  const timeoutMs = 8000;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(`${baseUrl}ticket-types`, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    return (await response.json()) as TicketTypeListResponse;
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw createTimeoutError();
+    }
+    if (isNetworkError(error)) {
+      throw createOfflineError(
+        "Voce esta offline. Conecte-se para carregar os tipos."
+      );
+    }
+    console.error(error);
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+// Lista areas cadastradas.
+export async function getAreaTypes(): Promise<AreaTypeListResponse> {
+  const apiUrl = process.env.EXPO_PUBLIC_BASE_URL;
+  if (!apiUrl) {
+    throw new Error("EXPO_PUBLIC_BASE_URL not set");
+  }
+  const baseUrl = apiUrl.endsWith("/") ? apiUrl : `${apiUrl}/`;
+  const token = await getAuthToken();
+  const timeoutMs = 8000;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(`${baseUrl}area-types`, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    return (await response.json()) as AreaTypeListResponse;
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw createTimeoutError();
+    }
+    if (isNetworkError(error)) {
+      throw createOfflineError(
+        "Voce esta offline. Conecte-se para carregar as areas."
+      );
+    }
+    console.error(error);
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
@@ -273,6 +426,11 @@ export async function uploadTicketImage(uri: string): Promise<UploadResponse> {
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
       throw createTimeoutError();
+    }
+    if (isNetworkError(error)) {
+      throw createOfflineError(
+        "Voce esta offline. Conecte-se para enviar a imagem."
+      );
     }
     console.error(error);
     throw error;

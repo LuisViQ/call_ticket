@@ -77,9 +77,20 @@ export function CardGridContentListProvider({
       }
       setTickets(data.data || []);
     } catch (err) {
-      console.error(err);
+      if (
+        !(
+          err instanceof Error &&
+          (err.name === "OfflineError" || err.name === "TimeoutError")
+        )
+      ) {
+        console.error(err);
+      }
       if (isMountedRef.current) {
-        setError("Nao foi possivel carregar os chamados.");
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError("Nao foi possivel carregar os chamados.");
+        }
       }
     } finally {
       if (isMountedRef.current) {

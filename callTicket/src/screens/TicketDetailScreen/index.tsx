@@ -8,6 +8,23 @@ type AppStackParamList = {
   TicketDetailScreen: { ticket: TicketItem };
 };
 
+function resolveMetaLabel(
+  value: TicketItem["ticket_type"] | TicketItem["area_type"],
+  id?: number | null
+) {
+  if (!value) {
+    return id ? `ID ${id}` : "Nao informado";
+  }
+  if (typeof value === "string") {
+    return value;
+  }
+  const label = value.name || value.title;
+  if (label) {
+    return label;
+  }
+  return id ? `ID ${id}` : "Nao informado";
+}
+
 // Normaliza URLs de anexos para uso no Image.
 function resolveTicketUrl(url?: string | null) {
   if (!url) {
@@ -45,7 +62,7 @@ export default function TicketDetailScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Chamado #{ticket.id}</Text>
+      <Text style={styles.title}>{ticket.title || `Chamado #${ticket.id}`}</Text>
 
       <View style={styles.section}>
         <Text style={styles.label}>Status</Text>
@@ -59,12 +76,16 @@ export default function TicketDetailScreen() {
 
       <View style={styles.section}>
         <Text style={styles.label}>Tipo</Text>
-        <Text style={styles.value}>{ticket.ticket_type || "Nao informado"}</Text>
+        <Text style={styles.value}>
+          {resolveMetaLabel(ticket.ticket_type, ticket.ticket_type_id)}
+        </Text>
       </View>
 
       <View style={styles.section}>
         <Text style={styles.label}>Area</Text>
-        <Text style={styles.value}>{ticket.area_type || "Nao informado"}</Text>
+        <Text style={styles.value}>
+          {resolveMetaLabel(ticket.area_type, ticket.area_type_id)}
+        </Text>
       </View>
 
       <View style={styles.section}>

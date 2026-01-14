@@ -10,6 +10,23 @@ import type { TicketItem } from "../services/tickets.service";
 type AppStackParamList = {
   TicketDetailScreen: { ticket: TicketItem };
 };
+
+function resolveMetaLabel(
+  value: TicketItem["ticket_type"] | TicketItem["area_type"],
+  id?: number | null
+) {
+  if (!value) {
+    return id ? `ID ${id}` : "Nao informado";
+  }
+  if (typeof value === "string") {
+    return value;
+  }
+  const label = value.name || value.title;
+  if (label) {
+    return label;
+  }
+  return id ? `ID ${id}` : "Nao informado";
+}
 // Componente que renderiza a lista de chamados.
 export const CardGridContentList = () => {
   const { tickets, isLoading, error } = useCardGridContentList();
@@ -47,7 +64,9 @@ export const CardGridContentList = () => {
             {/* Conteudo do card do chamado. */}
             <View style={styles.body}>
               <View style={styles.text}>
-                <Text style={styles.title}>Chamado #{ticket.id}</Text>
+                <Text style={styles.title}>
+                  {ticket.title || `Chamado #${ticket.id}`}
+                </Text>
                 <Text
                   style={[styles.bodyTextFor, styles.button2Typo]}
                   numberOfLines={3}
@@ -55,10 +74,12 @@ export const CardGridContentList = () => {
                   {ticket.description}
                 </Text>
                 <Text style={[styles.metaText, styles.button2Typo]}>
-                  Tipo: {ticket.ticket_type || "Nao informado"}
+                  Tipo:{" "}
+                  {resolveMetaLabel(ticket.ticket_type, ticket.ticket_type_id)}
                 </Text>
                 <Text style={[styles.metaText, styles.button2Typo]}>
-                  Area: {ticket.area_type || "Nao informado"}
+                  Area:{" "}
+                  {resolveMetaLabel(ticket.area_type, ticket.area_type_id)}
                 </Text>
               </View>
               <View style={[styles.buttonGroup, styles.buttonFlexBox]}>

@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import {
   Alert,
   Image,
@@ -11,24 +11,119 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import { styles } from "./styles";
 import ticketService, {
+  getAreaTypes,
+  getTicketTypes,
+  type AreaType,
+  type TicketType,
   uploadTicketImage,
 } from "../../services/tickets.service";
 import * as ImagePicker from "expo-image-picker";
 import { useAuth } from "../../contexts/AuthContext";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
+function formatMetaLabel(
+  item: { id: number; name?: string | null; title?: string | null },
+  fallback: string
+) {
+  return item.name || item.title || `${fallback} ${item.id}`;
+}
+
 // Tela para abertura de novo chamado.
 export default function NewTicketScreen() {
   const { isOffline } = useAuth();
+  const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [callType, setCallType] = useState("");
-  const [callArea, setCallArea] = useState("");
+  const [ticketTypeId, setTicketTypeId] = useState(0);
+  const [areaTypeId, setAreaTypeId] = useState(0);
+  const [ticketTypes, setTicketTypes] = useState<TicketType[]>([]);
+  const [areaTypes, setAreaTypes] = useState<AreaType[]>([]);
+  const [isLoadingMeta, setIsLoadingMeta] = useState(false);
+  const [ticketTypeLoadError, setTicketTypeLoadError] = useState("");
+  const [areaTypeLoadError, setAreaTypeLoadError] = useState("");
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [titleError, setTitleError] = useState("");
   const [descriptionError, setDescriptionError] = useState("");
-  const [callTypeError, setCallTypeError] = useState("");
-  const [callAreaError, setCallAreaError] = useState("");
+  const [ticketTypeError, setTicketTypeError] = useState("");
+  const [areaTypeError, setAreaTypeError] = useState("");
   const [submitError, setSubmitError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadMeta() {
+      if (isOffline) {
+        if (!active) {
+          return;
+        }
+        setTicketTypes([]);
+        setAreaTypes([]);
+        setIsLoadingMeta(false);
+        setTicketTypeLoadError(
+          "Voce esta offline. Conecte-se para carregar os tipos."
+        );
+        setAreaTypeLoadError(
+          "Voce esta offline. Conecte-se para carregar as areas."
+        );
+        return;
+      }
+
+      try {
+        setIsLoadingMeta(true);
+        setTicketTypeLoadError("");
+        setAreaTypeLoadError("");
+        const [typesResult, areasResult] = await Promise.all([
+          getTicketTypes(),
+          getAreaTypes(),
+        ]);
+        if (!active) {
+          return;
+        }
+        if (!typesResult.ok) {
+          setTicketTypes([]);
+          setTicketTypeLoadError("Nao foi possivel carregar os tipos.");
+        } else {
+          setTicketTypes(typesResult.data || []);
+        }
+        if (!areasResult.ok) {
+          setAreaTypes([]);
+          setAreaTypeLoadError("Nao foi possivel carregar as areas.");
+        } else {
+          setAreaTypes(areasResult.data || []);
+        }
+      } catch (error) {
+        if (!active) {
+          return;
+        }
+        if (
+          !(
+            error instanceof Error &&
+            (error.name === "TimeoutError" || error.name === "OfflineError")
+          )
+        ) {
+          console.error(error);
+        }
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Nao foi possivel carregar os dados.";
+        setTicketTypes([]);
+        setAreaTypes([]);
+        setTicketTypeLoadError(message);
+        setAreaTypeLoadError(message);
+      } finally {
+        if (active) {
+          setIsLoadingMeta(false);
+        }
+      }
+    }
+
+    loadMeta();
+
+    return () => {
+      active = false;
+    };
+  }, [isOffline]);
 
   // Seleciona imagem da galeria.
   async function handlePickImage() {
@@ -68,41 +163,56 @@ export default function NewTicketScreen() {
       setSubmitError("Voce esta offline. Conecte-se para enviar o chamado.");
       return;
     }
+    setTitleError("");
+    setDescriptionError("");
+    setTicketTypeError("");
+    setAreaTypeError("");
+    setSubmitError("");
+
     let hasError = false;
-    if (!description) {
+    if (!title.trim()) {
+      setTitleError("Informe o titulo.");
+      hasError = true;
+    }
+    if (!description.trim()) {
       setDescriptionError("Informe a descricao.");
       hasError = true;
     }
-    if (!callType) {
-      setCallTypeError("Selecione o tipo.");
+    if (!ticketTypeId) {
+      setTicketTypeError("Selecione o tipo.");
       hasError = true;
     }
-    if (!callArea) {
-      setCallAreaError("Selecione a area.");
+    if (!areaTypeId) {
+      setAreaTypeError("Selecione a area.");
       hasError = true;
     }
     if (hasError) {
-      setSubmitError("");
       return;
     }
     try {
       setIsSubmitting(true);
-      setSubmitError("");
       let imageUrl: string | undefined;
       if (imageUri) {
         const upload = await uploadTicketImage(imageUri);
         imageUrl = upload.url;
       }
       await ticketService({
-        description,
-        ticket_type: callType,
-        area_type: callArea,
+        title: title.trim(),
+        description: description.trim(),
+        status: "AGUARDANDO",
+        ticket_type_id: ticketTypeId,
+        area_type_id: areaTypeId,
         url: imageUrl,
       });
       setImageUri(null);
       Alert.alert("Sucesso", "Chamado enviado com sucesso!");
     } catch (error) {
-      if (!(error instanceof Error && error.name === "TimeoutError")) {
+      if (
+        !(
+          error instanceof Error &&
+          (error.name === "TimeoutError" || error.name === "OfflineError")
+        )
+      ) {
         console.error(error);
       }
       const message =
@@ -115,11 +225,38 @@ export default function NewTicketScreen() {
     }
   }
 
+  const typeErrorMessage = ticketTypeError || ticketTypeLoadError;
+  const areaErrorMessage = areaTypeError || areaTypeLoadError;
+
   return (
     <ScrollView style={styles.screen}>
       <View style={styles.form}>
         <View style={styles.field}>
-          <Text style={styles.pickerLabel}>Descrição do Chamado</Text>
+          <Text style={styles.pickerLabel}>Titulo do Chamado</Text>
+          <TextInput
+            value={title}
+            onChangeText={(value) => {
+              setTitle(value);
+              if (titleError) setTitleError("");
+              if (submitError) setSubmitError("");
+            }}
+            placeholder="Titulo do chamado"
+            placeholderTextColor="#bdbdbd"
+            style={[styles.input, styles.inputSingleLine]}
+          />
+          {titleError ? (
+            <View style={styles.errorArea}>
+              <MaterialIcons
+                name="error-outline"
+                size={14}
+                style={styles.errorIcon}
+              />
+              <Text style={styles.errorText}>{titleError}</Text>
+            </View>
+          ) : null}
+        </View>
+        <View style={styles.field}>
+          <Text style={styles.pickerLabel}>Descricao do Chamado</Text>
           <TextInput
             value={description}
             onChangeText={(value) => {
@@ -143,69 +280,82 @@ export default function NewTicketScreen() {
             </View>
           ) : null}
         </View>
-
         <View style={styles.field}>
-          <Text style={styles.pickerLabel}>Tipo de chamado</Text>
+          <Text style={styles.pickerLabel}>Tipo de chamado *</Text>
           <View style={styles.pickerBox}>
             <Picker
-              selectedValue={callType}
+              selectedValue={ticketTypeId}
               onValueChange={(value) => {
-                setCallType(value);
-                if (callTypeError) setCallTypeError("");
+                setTicketTypeId(Number(value));
+                if (ticketTypeError) setTicketTypeError("");
+                if (ticketTypeLoadError) setTicketTypeLoadError("");
                 if (submitError) setSubmitError("");
               }}
               style={styles.picker}
             >
-              <Picker.Item label="Selecione..." value="" color="#bdbdbd" />
-              <Picker.Item label="Suporte Tecnico" value="suporte" />
-              <Picker.Item label="Manutencao" value="manutencao" />
-              <Picker.Item label="Duvida" value="duvida" />
-              <Picker.Item label="Reclamacao" value="reclamacao" />
+              <Picker.Item
+                label={isLoadingMeta ? "Carregando..." : "Selecione..."}
+                value={0}
+                color="#bdbdbd"
+              />
+              {ticketTypes.map((type) => (
+                <Picker.Item
+                  key={type.id}
+                  label={formatMetaLabel(type, "Tipo")}
+                  value={type.id}
+                />
+              ))}
             </Picker>
           </View>
-          {callTypeError ? (
+          {typeErrorMessage ? (
             <View style={styles.errorArea}>
               <MaterialIcons
                 name="error-outline"
                 size={14}
                 style={styles.errorIcon}
               />
-              <Text style={styles.errorText}>{callTypeError}</Text>
+              <Text style={styles.errorText}>{typeErrorMessage}</Text>
             </View>
           ) : null}
         </View>
-
         <View style={styles.field}>
-          <Text style={styles.pickerLabel}>Area do chamado</Text>
+          <Text style={styles.pickerLabel}>Area do chamado *</Text>
           <View style={styles.pickerBox}>
             <Picker
-              selectedValue={callArea}
+              selectedValue={areaTypeId}
               onValueChange={(value) => {
-                setCallArea(value);
-                if (callAreaError) setCallAreaError("");
+                setAreaTypeId(Number(value));
+                if (areaTypeError) setAreaTypeError("");
+                if (areaTypeLoadError) setAreaTypeLoadError("");
                 if (submitError) setSubmitError("");
               }}
               style={styles.picker}
             >
-              <Picker.Item label="Selecione..." value="" color="#bdbdbd" />
-              <Picker.Item label="TI" value="ti" />
-              <Picker.Item label="Recursos Humanos" value="rh" />
-              <Picker.Item label="Financeiro" value="financeiro" />
-              <Picker.Item label="Operacoes" value="operacoes" />
+              <Picker.Item
+                label={isLoadingMeta ? "Carregando..." : "Selecione..."}
+                value={0}
+                color="#bdbdbd"
+              />
+              {areaTypes.map((area) => (
+                <Picker.Item
+                  key={area.id}
+                  label={formatMetaLabel(area, "Area")}
+                  value={area.id}
+                />
+              ))}
             </Picker>
           </View>
-          {callAreaError ? (
+          {areaErrorMessage ? (
             <View style={styles.errorArea}>
               <MaterialIcons
                 name="error-outline"
                 size={14}
                 style={styles.errorIcon}
               />
-              <Text style={styles.errorText}>{callAreaError}</Text>
+              <Text style={styles.errorText}>{areaErrorMessage}</Text>
             </View>
           ) : null}
         </View>
-
         <View style={styles.field}>
           <Text style={styles.pickerLabel}>Imagem (opcional)</Text>
           <View style={styles.imageActions}>
@@ -230,7 +380,6 @@ export default function NewTicketScreen() {
             <Image source={{ uri: imageUri }} style={styles.imagePreview} />
           ) : null}
         </View>
-
         <Pressable
           style={styles.button}
           onPress={handleSubmit}
