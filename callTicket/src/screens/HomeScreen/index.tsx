@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { FlatList, Pressable, SafeAreaView, Text, View } from "react-native";
+import { FlatList, Pressable, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { styles } from "./styles";
 import { useAuth } from "../../contexts/AuthContext";
@@ -101,7 +102,7 @@ function HomeScreenContent() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <View>
