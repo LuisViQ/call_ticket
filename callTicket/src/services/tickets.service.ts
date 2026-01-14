@@ -1,5 +1,5 @@
 // Helpers para ler token local.
-import { getJwtToken } from "../utils/utils";
+import { getJwtToken, getUserData } from "../utils/utils";
 
 // Tipos usados pelo servico de chamados.
 export type TicketStatus =
@@ -94,8 +94,7 @@ function createOfflineError(message: string) {
 
 function isNetworkError(error: unknown) {
   return (
-    error instanceof TypeError &&
-    /Network request failed/i.test(error.message)
+    error instanceof TypeError && /Network request failed/i.test(error.message)
   );
 }
 
@@ -168,16 +167,15 @@ export default async function ticketService(
 }
 
 // Lista os chamados do usuario atual.
-export async function showTicketService(
-  userId?: number
-): Promise<TicketListResponse> {
+export async function showTicketService(): Promise<TicketListResponse> {
   const apiUrl = process.env.EXPO_PUBLIC_BASE_URL;
   if (!apiUrl) {
     throw new Error("EXPO_PUBLIC_BASE_URL not set");
   }
   const baseUrl = apiUrl.endsWith("/") ? apiUrl : `${apiUrl}/`;
   const token = await getAuthToken();
-  const path = userId ? `tickets/${userId}` : "tickets";
+  const userId = await getUserData();
+  const path = userId ? `tickets/${userId.id}` : "tickets";
   const timeoutMs = 8000;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -205,63 +203,6 @@ export async function showTicketService(
     if (isNetworkError(error)) {
       throw createOfflineError(
         "Voce esta offline. Conecte-se para carregar os chamados."
-      );
-    }
-    console.error(error);
-    throw error;
-  } finally {
-    clearTimeout(timeoutId);
-  }
-}
-
-// Atualiza um chamado existente.
-export async function updateTicketService(
-  ticketId: number,
-  payload: TicketUpdatePayload
-): Promise<TicketUpdateResponse> {
-  const apiUrl = process.env.EXPO_PUBLIC_BASE_URL;
-  if (!apiUrl) {
-    throw new Error("EXPO_PUBLIC_BASE_URL not set");
-  }
-  const baseUrl = apiUrl.endsWith("/") ? apiUrl : `${apiUrl}/`;
-  const token = await getAuthToken();
-  const timeoutMs = 10000;
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    // Monta o payload de atualizacao do chamado.
-    const body: Record<string, unknown> = {
-      status: payload.status,
-      title: payload.title,
-      description: payload.description,
-      ticket_type_id: payload.ticket_type_id,
-      area_type_id: payload.area_type_id,
-    };
-
-    // Envia a atualizacao para a API.
-    const response = await fetch(`${baseUrl}tickets/${ticketId}`, {
-      method: "PATCH",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(body),
-      signal: controller.signal,
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    return (await response.json()) as TicketUpdateResponse;
-  } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") {
-      throw createTimeoutError();
-    }
-    if (isNetworkError(error)) {
-      throw createOfflineError(
-        "Voce esta offline. Conecte-se para atualizar o chamado."
       );
     }
     console.error(error);

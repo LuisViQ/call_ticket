@@ -3,7 +3,6 @@ import { createStackNavigator } from "@react-navigation/stack";
 import { HomeScreen } from "../screens/HomeScreen";
 import NewTicketScreen from "../screens/CallScreen";
 import { ListCallScreen } from "../screens/ListCallScreen";
-import EditTicketScreen from "../screens/EditCallScreen";
 import TicketDetailScreen from "../screens/TicketDetailScreen";
 const { Screen, Navigator } = createStackNavigator();
 
@@ -30,11 +29,6 @@ export function AppStack() {
         name="TicketDetailScreen"
         component={TicketDetailScreen}
         options={{ title: "Detalhe do chamado" }}
-      />
-      <Screen
-        name="EditTicketScreen"
-        component={EditTicketScreen}
-        options={{ title: "Editar chamado" }}
       />
     </Navigator>
   );
