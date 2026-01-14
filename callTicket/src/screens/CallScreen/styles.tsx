@@ -5,8 +5,11 @@ export const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: "#fff",
+  },
+  scrollContent: {
     paddingHorizontal: 24,
-    paddingTop: 48,
+    paddingTop: 24,
+    paddingBottom: 32,
   },
 
   header: {
@@ -21,7 +24,7 @@ export const styles = StyleSheet.create({
   },
 
   form: {
-    marginTop: 32,
+    marginTop: 16,
     gap: 14,
   },
 
