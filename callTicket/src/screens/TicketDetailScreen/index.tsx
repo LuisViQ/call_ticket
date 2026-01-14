@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Image, ScrollView, Text, View } from "react-native";
 import { RouteProp, useRoute } from "@react-navigation/native";
 import { styles } from "./styles";
@@ -47,18 +47,89 @@ function resolveTicketUrl(url?: string | null) {
 export default function TicketDetailScreen() {
   const route = useRoute<RouteProp<AppStackParamList, "TicketDetailScreen">>();
   const { ticket } = route.params;
+  const [imageStatus, setImageStatus] = useState<
+    Record<string, "loading" | "loaded" | "error" | "timeout">
+  >({});
+  const imageTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>(
+    {}
+  );
   // Monta a lista de URLs de anexos (campo attachments ou url unica).
-  const attachmentUrls =
-    ticket.attachments
-      ?.map((attachment) => attachment?.file_url)
-      .filter((url): url is string => Boolean(url)) || [];
-  if (attachmentUrls.length === 0 && ticket.url) {
-    attachmentUrls.push(ticket.url);
-  }
+  const attachmentUrls = useMemo(() => {
+    const urls =
+      ticket.attachments
+        ?.map((attachment) => attachment?.file_url)
+        .filter((url): url is string => Boolean(url)) || [];
+    if (urls.length === 0 && ticket.url) {
+      urls.push(ticket.url);
+    }
+    return urls;
+  }, [ticket.attachments, ticket.url]);
   // Normaliza os caminhos para URLs validas.
-  const imageUrls = attachmentUrls
-    .map((url) => resolveTicketUrl(url))
-    .filter((url): url is string => Boolean(url));
+  const imageUrls = useMemo(
+    () =>
+      attachmentUrls
+        .map((url) => resolveTicketUrl(url))
+        .filter((url): url is string => Boolean(url)),
+    [attachmentUrls]
+  );
+  const imageKey = imageUrls.join("|");
+
+  useEffect(() => {
+    Object.values(imageTimeoutsRef.current).forEach((timeoutId) => {
+      clearTimeout(timeoutId);
+    });
+    imageTimeoutsRef.current = {};
+
+    if (imageUrls.length === 0) {
+      setImageStatus({});
+      return;
+    }
+
+    const nextStatus: Record<
+      string,
+      "loading" | "loaded" | "error" | "timeout"
+    > = {};
+    imageUrls.forEach((url) => {
+      nextStatus[url] = "loading";
+    });
+    setImageStatus(nextStatus);
+
+    imageUrls.forEach((url) => {
+      imageTimeoutsRef.current[url] = setTimeout(() => {
+        setImageStatus((prev) => {
+          if (prev[url] === "loaded") {
+            return prev;
+          }
+          return { ...prev, [url]: "timeout" };
+        });
+      }, 5000);
+    });
+
+    return () => {
+      Object.values(imageTimeoutsRef.current).forEach((timeoutId) => {
+        clearTimeout(timeoutId);
+      });
+      imageTimeoutsRef.current = {};
+    };
+  }, [imageKey]);
+
+  function handleImageLoaded(url: string) {
+    const timeoutId = imageTimeoutsRef.current[url];
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      delete imageTimeoutsRef.current[url];
+    }
+    setImageStatus((prev) => ({ ...prev, [url]: "loaded" }));
+  }
+
+  function handleImageError(url: string) {
+    const timeoutId = imageTimeoutsRef.current[url];
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      delete imageTimeoutsRef.current[url];
+    }
+    setImageStatus((prev) => ({ ...prev, [url]: "error" }));
+  }
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -92,9 +163,30 @@ export default function TicketDetailScreen() {
         <Text style={styles.label}>Imagem</Text>
         {imageUrls.length > 0 ? (
           <View>
-            {imageUrls.map((url, index) => (
-              <Image key={`${ticket.id}-${index}`} source={{ uri: url }} style={styles.image} />
-            ))}
+            {imageUrls.map((url, index) => {
+              const status = imageStatus[url] ?? "loading";
+              if (status === "error" || status === "timeout") {
+                return (
+                  <View
+                    key={`${ticket.id}-${index}`}
+                    style={styles.imageFallback}
+                  >
+                    <Text style={styles.imageFallbackText}>
+                      Nao foi possivel carregar a imagem.
+                    </Text>
+                  </View>
+                );
+              }
+              return (
+                <Image
+                  key={`${ticket.id}-${index}`}
+                  source={{ uri: url }}
+                  style={styles.image}
+                  onLoad={() => handleImageLoaded(url)}
+                  onError={() => handleImageError(url)}
+                />
+              );
+            })}
           </View>
         ) : (
           <Text style={styles.emptyText}>Sem imagem.</Text>
