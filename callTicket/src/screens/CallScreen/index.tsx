@@ -2,8 +2,6 @@
 import {
   Alert,
   Image,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -239,16 +237,14 @@ export default function NewTicketScreen() {
   const safeAreaTypes = Array.isArray(areaTypes) ? areaTypes : [];
 
   return (
-    <KeyboardAvoidingView
+    <ScrollView
       style={styles.screen}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      contentContainerStyle={styles.scrollContent}
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
+      showsVerticalScrollIndicator={false}
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.form}>
+      <View style={styles.form}>
           <View style={styles.field}>
             <Text style={styles.pickerLabel}>
               Titulo do Chamado <Text style={styles.titleObrigatory}>*</Text>
@@ -425,8 +421,7 @@ export default function NewTicketScreen() {
               <Text style={styles.errorText}>{submitError}</Text>
             </View>
           ) : null}
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </View>
+    </ScrollView>
   );
 }
