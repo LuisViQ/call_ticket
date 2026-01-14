@@ -85,17 +85,25 @@ export default function NewTicketScreen() {
         const areasData = Array.isArray(areasResult.data)
           ? areasResult.data
           : [];
+        const normalizedTypes = typesData
+          .filter((item): item is TicketType => Boolean(item && item.id))
+          .map((item) => ({ ...item, id: Number(item.id) }))
+          .filter((item) => Number.isFinite(item.id));
+        const normalizedAreas = areasData
+          .filter((item): item is AreaType => Boolean(item && item.id))
+          .map((item) => ({ ...item, id: Number(item.id) }))
+          .filter((item) => Number.isFinite(item.id));
         if (!typesResult.ok || !Array.isArray(typesResult.data)) {
           setTicketTypes([]);
           setTicketTypeLoadError("Nao foi possivel carregar os tipos.");
         } else {
-          setTicketTypes(typesData);
+          setTicketTypes(normalizedTypes);
         }
         if (!areasResult.ok || !Array.isArray(areasResult.data)) {
           setAreaTypes([]);
           setAreaTypeLoadError("Nao foi possivel carregar as areas.");
         } else {
-          setAreaTypes(areasData);
+          setAreaTypes(normalizedAreas);
         }
       } catch (error) {
         if (!active) {

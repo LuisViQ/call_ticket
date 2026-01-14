@@ -16,13 +16,28 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
+  logo: {
+    marginBottom: 10,
+  },
+  logoTop: {
+    fontSize: 11,
+    letterSpacing: 3,
+    color: "#d1d5db",
+    fontWeight: "600",
+  },
+  logoBottom: {
+    fontSize: 28,
+    letterSpacing: 1,
+    color: "#ffffff",
+    fontWeight: "700",
+    lineHeight: 30,
+  },
   welcome: {
-    fontFamily: "Inter-Bold",
     fontSize: 16,
     color: "#fff",
+    fontWeight: "700",
   },
   userName: {
-    fontFamily: "Inter-Regular",
     fontSize: 20,
     color: "#fff",
     marginTop: 4,
@@ -38,10 +53,10 @@ export const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.25)",
   },
   logoutText: {
-    fontFamily: "Inter-Bold",
     fontSize: 13,
     color: "#fff",
     marginLeft: 6,
+    fontWeight: "700",
   },
   logoutIcon: {
     color: "#fff",
@@ -99,7 +114,7 @@ export const styles = StyleSheet.create({
   primaryButtonText: {
     color: "#fff",
     fontSize: 15,
-    fontFamily: "Inter-Bold",
+    fontWeight: "700",
   },
   primaryButtonIcon: {
     color: "#fff",
@@ -112,9 +127,9 @@ export const styles = StyleSheet.create({
     marginBottom: 8,
   },
   sectionTitle: {
-    fontFamily: "Inter-Bold",
     fontSize: 16,
     color: "#111827",
+    fontWeight: "700",
   },
   sectionAction: {
     fontSize: 12,
@@ -136,9 +151,9 @@ export const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   ticketTitle: {
-    fontFamily: "Inter-SemiBold",
     fontSize: 15,
     color: "#111827",
+    fontWeight: "600",
   },
   statusPill: {
     backgroundColor: "#e5e7eb",
@@ -147,9 +162,9 @@ export const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   statusText: {
-    fontFamily: "Inter-SemiBold",
     fontSize: 11,
     color: "#374151",
+    fontWeight: "600",
   },
   statusPillWaiting: {
     backgroundColor: "#fef3c7",
@@ -205,7 +220,6 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
   },
   actionTitle: {
-    fontFamily: "Inter-Regular",
     fontSize: 19,
     color: "#000",
     textAlign: "left",

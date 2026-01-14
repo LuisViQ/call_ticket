@@ -21,7 +21,7 @@ export const styles = StyleSheet.create({
   title: {
     fontSize: 25,
     color: "#000",
-    fontFamily: "InclusiveSans-Regular",
+    fontWeight: "600",
   },
   titleObrigatory: {
     color: "red",
@@ -39,7 +39,7 @@ export const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: 12,
     color: "#000",
-    fontFamily: "Inter-Medium",
+    fontWeight: "500",
   },
 
   input: {
@@ -52,7 +52,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E8E8E8",
     borderRadius: 6,
-    fontFamily: "Inter-Medium",
+    fontWeight: "500",
   },
   inputSingleLine: {
     height: 44,
@@ -62,7 +62,7 @@ export const styles = StyleSheet.create({
   pickerLabel: {
     fontSize: 12,
     color: "#000",
-    fontFamily: "Inter-Medium",
+    fontWeight: "500",
   },
 
   pickerBox: {
@@ -119,7 +119,7 @@ export const styles = StyleSheet.create({
   buttonText: {
     fontSize: 14,
     color: "#fff",
-    fontFamily: "InclusiveSans-Regular",
+    fontWeight: "600",
   },
   errorArea: {
     flexDirection: "row",

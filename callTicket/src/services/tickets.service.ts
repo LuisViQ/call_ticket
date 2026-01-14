@@ -98,6 +98,20 @@ function isNetworkError(error: unknown) {
   );
 }
 
+// Normaliza a resposta da listagem para o formato esperado.
+function normalizeTicketListResponse(payload: unknown): TicketListResponse {
+  if (Array.isArray(payload)) {
+    return { ok: true, data: payload as TicketItem[] };
+  }
+  if (payload && typeof payload === "object") {
+    const data = payload as { ok?: boolean; data?: unknown };
+    if (Array.isArray(data.data)) {
+      return { ok: data.ok ?? true, data: data.data as TicketItem[] };
+    }
+  }
+  return { ok: false, data: [] };
+}
+
 // Recupera o token JWT armazenado localmente.
 async function getAuthToken(): Promise<string> {
   const token = await getJwtToken();
@@ -174,28 +188,42 @@ export async function showTicketService(): Promise<TicketListResponse> {
   }
   const baseUrl = apiUrl.endsWith("/") ? apiUrl : `${apiUrl}/`;
   const token = await getAuthToken();
-  const userId = await getUserData();
-  const path = userId ? `tickets/${userId.id}` : "tickets";
-  const timeoutMs = 8000;
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const userData = await getUserData();
+  const userId = userData?.id;
+  const paths = typeof userId === "number" ? [`tickets/${userId}`, "tickets"] : ["tickets"];
 
   try {
-    // Busca os chamados do usuario.
-    const response = await fetch(`${baseUrl}${path}`, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      signal: controller.signal,
-    });
+    for (let index = 0; index < paths.length; index += 1) {
+      const path = paths[index];
+      const timeoutMs = 8000;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+      try {
+        // Busca os chamados do usuario.
+        const response = await fetch(`${baseUrl}${path}`, {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          if (response.status === 404 && index < paths.length - 1) {
+            continue;
+          }
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const payload = await response.json();
+        return normalizeTicketListResponse(payload);
+      } finally {
+        clearTimeout(timeoutId);
+      }
     }
-    return (await response.json()) as TicketListResponse;
+    throw new Error("HTTP 404");
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
       throw createTimeoutError();
@@ -207,8 +235,6 @@ export async function showTicketService(): Promise<TicketListResponse> {
     }
     console.error(error);
     throw error;
-  } finally {
-    clearTimeout(timeoutId);
   }
 }
 

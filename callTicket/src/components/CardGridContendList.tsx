@@ -102,7 +102,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   button2Typo: {
-    fontFamily: "Inter-Regular",
     fontSize: 16,
     textAlign: "left",
   },
@@ -137,7 +136,6 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
     lineHeight: 29,
     fontWeight: "600",
-    fontFamily: "Inter-SemiBold",
     textAlign: "left",
     color: "#1e1e1e",
     alignSelf: "stretch",

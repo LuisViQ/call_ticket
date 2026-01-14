@@ -105,6 +105,10 @@ function HomeScreenContent() {
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <View>
+            <View style={styles.logo}>
+              <Text style={styles.logoTop}>LINK</Text>
+              <Text style={styles.logoBottom}>TICKET</Text>
+            </View>
             <Text style={styles.welcome}>Bem-vindo(a)</Text>
             <Text style={styles.userName}>{userName}</Text>
           </View>
