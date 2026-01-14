@@ -81,17 +81,23 @@ export default function NewTicketScreen() {
         if (!active) {
           return;
         }
-        if (!typesResult.ok) {
+        const typesData = Array.isArray(typesResult.data)
+          ? typesResult.data
+          : [];
+        const areasData = Array.isArray(areasResult.data)
+          ? areasResult.data
+          : [];
+        if (!typesResult.ok || !Array.isArray(typesResult.data)) {
           setTicketTypes([]);
           setTicketTypeLoadError("Nao foi possivel carregar os tipos.");
         } else {
-          setTicketTypes(typesResult.data || []);
+          setTicketTypes(typesData);
         }
-        if (!areasResult.ok) {
+        if (!areasResult.ok || !Array.isArray(areasResult.data)) {
           setAreaTypes([]);
           setAreaTypeLoadError("Nao foi possivel carregar as areas.");
         } else {
-          setAreaTypes(areasResult.data || []);
+          setAreaTypes(areasData);
         }
       } catch (error) {
         if (!active) {
@@ -229,6 +235,8 @@ export default function NewTicketScreen() {
 
   const typeErrorMessage = ticketTypeError || ticketTypeLoadError;
   const areaErrorMessage = areaTypeError || areaTypeLoadError;
+  const safeTicketTypes = Array.isArray(ticketTypes) ? ticketTypes : [];
+  const safeAreaTypes = Array.isArray(areaTypes) ? areaTypes : [];
 
   return (
     <KeyboardAvoidingView
@@ -241,174 +249,182 @@ export default function NewTicketScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.form}>
-        <View style={styles.field}>
-          <Text style={styles.pickerLabel}>Titulo do Chamado</Text>
-          <TextInput
-            value={title}
-            onChangeText={(value) => {
-              setTitle(value);
-              if (titleError) setTitleError("");
-              if (submitError) setSubmitError("");
-            }}
-            placeholder="Titulo do chamado"
-            placeholderTextColor="#bdbdbd"
-            style={[styles.input, styles.inputSingleLine]}
-          />
-          {titleError ? (
-            <View style={styles.errorArea}>
-              <MaterialIcons
-                name="error-outline"
-                size={14}
-                style={styles.errorIcon}
-              />
-              <Text style={styles.errorText}>{titleError}</Text>
-            </View>
-          ) : null}
-        </View>
-        <View style={styles.field}>
-          <Text style={styles.pickerLabel}>Descricao do Chamado</Text>
-          <TextInput
-            value={description}
-            onChangeText={(value) => {
-              setDescription(value);
-              if (descriptionError) setDescriptionError("");
-              if (submitError) setSubmitError("");
-            }}
-            placeholder="Descreva o problema ou solicitacao"
-            placeholderTextColor="#bdbdbd"
-            style={styles.input}
-            multiline={true}
-          />
-          {descriptionError ? (
-            <View style={styles.errorArea}>
-              <MaterialIcons
-                name="error-outline"
-                size={14}
-                style={styles.errorIcon}
-              />
-              <Text style={styles.errorText}>{descriptionError}</Text>
-            </View>
-          ) : null}
-        </View>
-        <View style={styles.field}>
-          <Text style={styles.pickerLabel}>Tipo de chamado *</Text>
-          <View style={styles.pickerBox}>
-            <Picker
-              selectedValue={ticketTypeId}
-              onValueChange={(value) => {
-                setTicketTypeId(Number(value));
-                if (ticketTypeError) setTicketTypeError("");
-                if (ticketTypeLoadError) setTicketTypeLoadError("");
+          <View style={styles.field}>
+            <Text style={styles.pickerLabel}>
+              Titulo do Chamado <Text style={styles.titleObrigatory}>*</Text>
+            </Text>
+            <TextInput
+              value={title}
+              onChangeText={(value) => {
+                setTitle(value);
+                if (titleError) setTitleError("");
                 if (submitError) setSubmitError("");
               }}
-              style={styles.picker}
-            >
-              <Picker.Item
-                label={isLoadingMeta ? "Carregando..." : "Selecione..."}
-                value={0}
-                color="#bdbdbd"
-              />
-              {ticketTypes.map((type) => (
-                <Picker.Item
-                  key={type.id}
-                  label={formatMetaLabel(type, "Tipo")}
-                  value={type.id}
-                />
-              ))}
-            </Picker>
-          </View>
-          {typeErrorMessage ? (
-            <View style={styles.errorArea}>
-              <MaterialIcons
-                name="error-outline"
-                size={14}
-                style={styles.errorIcon}
-              />
-              <Text style={styles.errorText}>{typeErrorMessage}</Text>
-            </View>
-          ) : null}
-        </View>
-        <View style={styles.field}>
-          <Text style={styles.pickerLabel}>Area do chamado *</Text>
-          <View style={styles.pickerBox}>
-            <Picker
-              selectedValue={areaTypeId}
-              onValueChange={(value) => {
-                setAreaTypeId(Number(value));
-                if (areaTypeError) setAreaTypeError("");
-                if (areaTypeLoadError) setAreaTypeLoadError("");
-                if (submitError) setSubmitError("");
-              }}
-              style={styles.picker}
-            >
-              <Picker.Item
-                label={isLoadingMeta ? "Carregando..." : "Selecione..."}
-                value={0}
-                color="#bdbdbd"
-              />
-              {areaTypes.map((area) => (
-                <Picker.Item
-                  key={area.id}
-                  label={formatMetaLabel(area, "Area")}
-                  value={area.id}
-                />
-              ))}
-            </Picker>
-          </View>
-          {areaErrorMessage ? (
-            <View style={styles.errorArea}>
-              <MaterialIcons
-                name="error-outline"
-                size={14}
-                style={styles.errorIcon}
-              />
-              <Text style={styles.errorText}>{areaErrorMessage}</Text>
-            </View>
-          ) : null}
-        </View>
-        <View style={styles.field}>
-          <Text style={styles.pickerLabel}>Imagem (opcional)</Text>
-          <View style={styles.imageActions}>
-            <Pressable
-              style={[styles.secondaryButton, styles.imageActionButton]}
-              onPress={handleTakePhoto}
-            >
-              <Text style={styles.secondaryButtonText}>
-                {imageUri ? "Tirar outra foto" : "Tirar foto"}
-              </Text>
-            </Pressable>
-            <Pressable
-              style={[styles.secondaryButton, styles.imageActionButton]}
-              onPress={handlePickImage}
-            >
-              <Text style={styles.secondaryButtonText}>
-                {imageUri ? "Trocar imagem" : "Selecionar imagem"}
-              </Text>
-            </Pressable>
-          </View>
-          {imageUri ? (
-            <Image source={{ uri: imageUri }} style={styles.imagePreview} />
-          ) : null}
-        </View>
-        <Pressable
-          style={styles.button}
-          onPress={handleSubmit}
-          disabled={isSubmitting}
-        >
-          <Text style={styles.buttonText}>
-            {isSubmitting ? "Enviando..." : "Enviar"}
-          </Text>
-        </Pressable>
-        {submitError ? (
-          <View style={styles.errorArea}>
-            <MaterialIcons
-              name="error-outline"
-              size={14}
-              style={styles.errorIcon}
+              placeholder="Titulo do chamado"
+              placeholderTextColor="#bdbdbd"
+              style={[styles.input, styles.inputSingleLine]}
             />
-            <Text style={styles.errorText}>{submitError}</Text>
+            {titleError ? (
+              <View style={styles.errorArea}>
+                <MaterialIcons
+                  name="error-outline"
+                  size={14}
+                  style={styles.errorIcon}
+                />
+                <Text style={styles.errorText}>{titleError}</Text>
+              </View>
+            ) : null}
           </View>
-        ) : null}
+          <View style={styles.field}>
+            <Text style={styles.pickerLabel}>
+              Descricao do Chamado <Text style={styles.titleObrigatory}>*</Text>
+            </Text>
+            <TextInput
+              value={description}
+              onChangeText={(value) => {
+                setDescription(value);
+                if (descriptionError) setDescriptionError("");
+                if (submitError) setSubmitError("");
+              }}
+              placeholder="Descreva o problema ou solicitacao"
+              placeholderTextColor="#bdbdbd"
+              style={styles.input}
+              multiline={true}
+            />
+            {descriptionError ? (
+              <View style={styles.errorArea}>
+                <MaterialIcons
+                  name="error-outline"
+                  size={14}
+                  style={styles.errorIcon}
+                />
+                <Text style={styles.errorText}>{descriptionError}</Text>
+              </View>
+            ) : null}
+          </View>
+          <View style={styles.field}>
+            <Text style={styles.pickerLabel}>
+              Tipo de chamado <Text style={styles.titleObrigatory}>*</Text>
+            </Text>
+            <View style={styles.pickerBox}>
+              <Picker
+                selectedValue={ticketTypeId}
+                onValueChange={(value) => {
+                  setTicketTypeId(Number(value));
+                  if (ticketTypeError) setTicketTypeError("");
+                  if (ticketTypeLoadError) setTicketTypeLoadError("");
+                  if (submitError) setSubmitError("");
+                }}
+                style={styles.picker}
+              >
+                <Picker.Item
+                  label={isLoadingMeta ? "Carregando..." : "Selecione..."}
+                  value={0}
+                  color="#bdbdbd"
+                />
+                {safeTicketTypes.map((type) => (
+                  <Picker.Item
+                    key={type.id}
+                    label={formatMetaLabel(type, "Tipo")}
+                    value={type.id}
+                  />
+                ))}
+              </Picker>
+            </View>
+            {typeErrorMessage ? (
+              <View style={styles.errorArea}>
+                <MaterialIcons
+                  name="error-outline"
+                  size={14}
+                  style={styles.errorIcon}
+                />
+                <Text style={styles.errorText}>{typeErrorMessage}</Text>
+              </View>
+            ) : null}
+          </View>
+          <View style={styles.field}>
+            <Text style={styles.pickerLabel}>
+              Area do chamado <Text style={styles.titleObrigatory}>*</Text>
+            </Text>
+            <View style={styles.pickerBox}>
+              <Picker
+                selectedValue={areaTypeId}
+                onValueChange={(value) => {
+                  setAreaTypeId(Number(value));
+                  if (areaTypeError) setAreaTypeError("");
+                  if (areaTypeLoadError) setAreaTypeLoadError("");
+                  if (submitError) setSubmitError("");
+                }}
+                style={styles.picker}
+              >
+                <Picker.Item
+                  label={isLoadingMeta ? "Carregando..." : "Selecione..."}
+                  value={0}
+                  color="#bdbdbd"
+                />
+                {safeAreaTypes.map((area) => (
+                  <Picker.Item
+                    key={area.id}
+                    label={formatMetaLabel(area, "Area")}
+                    value={area.id}
+                  />
+                ))}
+              </Picker>
+            </View>
+            {areaErrorMessage ? (
+              <View style={styles.errorArea}>
+                <MaterialIcons
+                  name="error-outline"
+                  size={14}
+                  style={styles.errorIcon}
+                />
+                <Text style={styles.errorText}>{areaErrorMessage}</Text>
+              </View>
+            ) : null}
+          </View>
+          <View style={styles.field}>
+            <Text style={styles.pickerLabel}>Imagem (opcional)</Text>
+            <View style={styles.imageActions}>
+              <Pressable
+                style={[styles.secondaryButton, styles.imageActionButton]}
+                onPress={handleTakePhoto}
+              >
+                <Text style={styles.secondaryButtonText}>
+                  {imageUri ? "Tirar outra foto" : "Tirar foto"}
+                </Text>
+              </Pressable>
+              <Pressable
+                style={[styles.secondaryButton, styles.imageActionButton]}
+                onPress={handlePickImage}
+              >
+                <Text style={styles.secondaryButtonText}>
+                  {imageUri ? "Trocar imagem" : "Selecionar imagem"}
+                </Text>
+              </Pressable>
+            </View>
+            {imageUri ? (
+              <Image source={{ uri: imageUri }} style={styles.imagePreview} />
+            ) : null}
+          </View>
+          <Pressable
+            style={styles.button}
+            onPress={handleSubmit}
+            disabled={isSubmitting}
+          >
+            <Text style={styles.buttonText}>
+              {isSubmitting ? "Enviando..." : "Enviar"}
+            </Text>
+          </Pressable>
+          {submitError ? (
+            <View style={styles.errorArea}>
+              <MaterialIcons
+                name="error-outline"
+                size={14}
+                style={styles.errorIcon}
+              />
+              <Text style={styles.errorText}>{submitError}</Text>
+            </View>
+          ) : null}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

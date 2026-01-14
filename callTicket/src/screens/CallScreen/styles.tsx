@@ -22,6 +22,9 @@ export const styles = StyleSheet.create({
     color: "#000",
     fontFamily: "InclusiveSans-Regular",
   },
+  titleObrigatory: {
+    color: "red",
+  },
 
   form: {
     marginTop: 16,
