@@ -4,7 +4,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import type { StackNavigationProp } from "@react-navigation/stack";
 import { useCardGridContentList } from "../contexts/CardGridContentListContext";
-import type { TicketItem } from "../services/tickets.service";
+import {
+  getTicketStatusLabel,
+  normalizeTicketStatus,
+  type TicketItem,
+} from "../services/tickets.service";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 // Tipos de navegacao usados na tela de detalhe.
 type AppStackParamList = {
@@ -26,6 +31,21 @@ function resolveMetaLabel(
     return label;
   }
   return id ? `ID ${id}` : "Nao informado";
+}
+
+function getStatusPresentation(status: TicketItem["status"]) {
+  switch (normalizeTicketStatus(status)) {
+    case "AGUARDANDO":
+      return { icon: "schedule", color: "#92400e" };
+    case "EM_ATENDIMENTO":
+      return { icon: "autorenew", color: "#1e40af" };
+    case "CANCELADO":
+      return { icon: "cancel", color: "#991b1b" };
+    case "ENCERRADO":
+      return { icon: "check-circle", color: "#166534" };
+    default:
+      return { icon: "info", color: "#374151" };
+  }
 }
 // Componente que renderiza a lista de chamados.
 export const CardGridContentList = () => {
@@ -54,44 +74,62 @@ export const CardGridContentList = () => {
         ListEmptyComponent={renderEmptyState}
         ItemSeparatorComponent={() => <View style={styles.cardSeparator} />}
         // Abre a tela de detalhes do chamado.
-        renderItem={({ item: ticket }) => (
-          <Pressable
-            style={styles.card}
-            onPress={() =>
-              navigation.navigate("TicketDetailScreen", { ticket })
-            }
-          >
-            {/* Conteudo do card do chamado. */}
-            <View style={styles.body}>
-              <View style={styles.text}>
-                <Text style={styles.title}>
-                  {ticket.title || `Chamado #${ticket.id}`}
-                </Text>
-                <Text
-                  style={[styles.bodyTextFor, styles.button2Typo]}
-                  numberOfLines={3}
-                >
-                  {ticket.description}
-                </Text>
-                <Text style={[styles.metaText, styles.button2Typo]}>
-                  Tipo:{" "}
-                  {resolveMetaLabel(ticket.ticket_type, ticket.ticket_type_id)}
-                </Text>
-                <Text style={[styles.metaText, styles.button2Typo]}>
-                  Area:{" "}
-                  {resolveMetaLabel(ticket.area_type, ticket.area_type_id)}
-                </Text>
-              </View>
-              <View style={[styles.buttonGroup, styles.buttonFlexBox]}>
-                <View style={[styles.button, styles.buttonFlexBox]}>
-                  <Text style={[styles.button2, styles.button2Typo]}>
-                    {ticket.status}
+        renderItem={({ item: ticket }) => {
+          const statusPresentation = getStatusPresentation(ticket.status);
+          const statusLabel = getTicketStatusLabel(ticket.status);
+          return (
+            <Pressable
+              style={styles.card}
+              onPress={() =>
+                navigation.navigate("TicketDetailScreen", { ticket })
+              }
+            >
+              {/* Conteudo do card do chamado. */}
+              <View style={styles.body}>
+                <View style={styles.text}>
+                  <Text style={styles.title}>
+                    {ticket.title || `Chamado #${ticket.id}`}
+                  </Text>
+                  <Text
+                    style={[styles.bodyTextFor, styles.button2Typo]}
+                    numberOfLines={3}
+                  >
+                    {ticket.description}
+                  </Text>
+                  <Text style={[styles.metaText, styles.button2Typo]}>
+                    Tipo:{" "}
+                    {resolveMetaLabel(ticket.ticket_type, ticket.ticket_type_id)}
+                  </Text>
+                  <Text style={[styles.metaText, styles.button2Typo]}>
+                    Area:{" "}
+                    {resolveMetaLabel(ticket.area_type, ticket.area_type_id)}
                   </Text>
                 </View>
+                <View style={[styles.buttonGroup, styles.buttonFlexBox]}>
+                  <View style={[styles.button, styles.buttonFlexBox]}>
+                    <MaterialIcons
+                      name={statusPresentation.icon}
+                      size={16}
+                      style={[
+                        styles.statusIcon,
+                        { color: statusPresentation.color },
+                      ]}
+                    />
+                    <Text
+                      style={[
+                        styles.button2,
+                        styles.button2Typo,
+                        { color: statusPresentation.color },
+                      ]}
+                    >
+                      {statusLabel}
+                    </Text>
+                  </View>
+                </View>
               </View>
-            </View>
-          </Pressable>
-        )}
+            </Pressable>
+          );
+        }}
       />
     </SafeAreaView>
   );
@@ -167,6 +205,9 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     color: "#1e1e1e",
     fontSize: 16,
+  },
+  statusIcon: {
+    marginRight: 6,
   },
   stateText: {
     color: "#757575",

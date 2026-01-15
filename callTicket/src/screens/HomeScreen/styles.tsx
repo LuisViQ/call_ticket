@@ -161,10 +161,17 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
+  statusPillContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
   statusText: {
     fontSize: 11,
     color: "#374151",
     fontWeight: "600",
+  },
+  statusIcon: {
+    marginRight: 4,
   },
   statusPillWaiting: {
     backgroundColor: "#fef3c7",

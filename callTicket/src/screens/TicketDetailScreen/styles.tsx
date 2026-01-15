@@ -20,6 +20,13 @@ export const styles = StyleSheet.create({
     color: "#6b7280",
     marginBottom: 4,
   },
+  statusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  statusIcon: {
+    marginRight: 6,
+  },
   value: {
     fontSize: 16,
     color: "#111827",

@@ -2,8 +2,13 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Image, ScrollView, Text, View } from "react-native";
 import { RouteProp, useRoute } from "@react-navigation/native";
 import { styles } from "./styles";
-import { TicketItem } from "../../services/tickets.service";
+import {
+  getTicketStatusLabel,
+  normalizeTicketStatus,
+  TicketItem,
+} from "../../services/tickets.service";
 import { StatusBar } from "expo-status-bar";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 type AppStackParamList = {
   TicketDetailScreen: { ticket: TicketItem };
@@ -24,6 +29,21 @@ function resolveMetaLabel(
     return label;
   }
   return id ? `ID ${id}` : "Nao informado";
+}
+
+function getStatusPresentation(status: TicketItem["status"]) {
+  switch (normalizeTicketStatus(status)) {
+    case "AGUARDANDO":
+      return { icon: "schedule", color: "#92400e" };
+    case "EM_ATENDIMENTO":
+      return { icon: "autorenew", color: "#1e40af" };
+    case "CANCELADO":
+      return { icon: "cancel", color: "#991b1b" };
+    case "ENCERRADO":
+      return { icon: "check-circle", color: "#166534" };
+    default:
+      return { icon: "info", color: "#374151" };
+  }
 }
 
 // Normaliza URLs de anexos para uso no Image.
@@ -48,6 +68,8 @@ function resolveTicketUrl(url?: string | null) {
 export default function TicketDetailScreen() {
   const route = useRoute<RouteProp<AppStackParamList, "TicketDetailScreen">>();
   const { ticket } = route.params;
+  const statusPresentation = getStatusPresentation(ticket.status);
+  const statusLabel = getTicketStatusLabel(ticket.status);
   const [imageStatus, setImageStatus] = useState<
     Record<string, "loading" | "loaded" | "error" | "timeout">
   >({});
@@ -141,7 +163,14 @@ export default function TicketDetailScreen() {
 
       <View style={styles.section}>
         <Text style={styles.label}>Status</Text>
-        <Text style={styles.value}>{ticket.status}</Text>
+        <View style={styles.statusRow}>
+          <MaterialIcons
+            name={statusPresentation.icon}
+            size={18}
+            style={[styles.statusIcon, { color: statusPresentation.color }]}
+          />
+          <Text style={styles.value}>{statusLabel}</Text>
+        </View>
       </View>
 
       <View style={styles.section}>

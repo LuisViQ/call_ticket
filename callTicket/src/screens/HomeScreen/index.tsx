@@ -10,7 +10,11 @@ import {
   CardGridContentListProvider,
   useCardGridContentList,
 } from "../../contexts/CardGridContentListContext";
-import type { TicketItem } from "../../services/tickets.service";
+import {
+  getTicketStatusLabel,
+  normalizeTicketStatus,
+  type TicketItem,
+} from "../../services/tickets.service";
 
 import type { StackNavigationProp } from "@react-navigation/stack";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -23,7 +27,7 @@ type AppStackParamList = {
 };
 
 function getStatusStyle(status: TicketItem["status"]) {
-  switch (status) {
+  switch (normalizeTicketStatus(status)) {
     case "AGUARDANDO":
       return { pill: styles.statusPillWaiting, text: styles.statusTextWaiting };
     case "EM_ATENDIMENTO":
@@ -40,6 +44,21 @@ function getStatusStyle(status: TicketItem["status"]) {
       return { pill: styles.statusPillClosed, text: styles.statusTextClosed };
     default:
       return { pill: styles.statusPill, text: styles.statusText };
+  }
+}
+
+function getStatusIconName(status: TicketItem["status"]) {
+  switch (normalizeTicketStatus(status)) {
+    case "AGUARDANDO":
+      return "schedule";
+    case "EM_ATENDIMENTO":
+      return "autorenew";
+    case "CANCELADO":
+      return "cancel";
+    case "ENCERRADO":
+      return "check-circle";
+    default:
+      return "info";
   }
 }
 
@@ -165,6 +184,8 @@ function HomeScreenContent() {
           ItemSeparatorComponent={() => <View style={styles.cardSeparator} />}
           renderItem={({ item }) => {
             const statusStyle = getStatusStyle(item.status);
+            const statusIconName = getStatusIconName(item.status);
+            const statusLabel = getTicketStatusLabel(item.status);
             const titleText = item.title?.trim();
             const ticketTypeLabel = resolveMetaLabel(
               item.ticket_type,
@@ -185,9 +206,20 @@ function HomeScreenContent() {
                   <Text style={styles.ticketTitle}>
                     {titleText || `Chamado #${item.id}`}
                   </Text>
-                  <View style={[styles.statusPill, statusStyle.pill]}>
+                  <View
+                    style={[
+                      styles.statusPill,
+                      styles.statusPillContent,
+                      statusStyle.pill,
+                    ]}
+                  >
+                    <MaterialIcons
+                      name={statusIconName}
+                      size={12}
+                      style={[styles.statusIcon, statusStyle.text]}
+                    />
                     <Text style={[styles.statusText, statusStyle.text]}>
-                      {item.status}
+                      {statusLabel}
                     </Text>
                   </View>
                 </View>

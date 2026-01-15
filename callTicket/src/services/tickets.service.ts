@@ -8,6 +8,44 @@ export type TicketStatus =
   | "CANCELADO"
   | "ENCERRADO";
 
+const STATUS_LABELS: Record<TicketStatus, string> = {
+  AGUARDANDO: "Aguardando",
+  EM_ATENDIMENTO: "Em atendimento",
+  CANCELADO: "Cancelado",
+  ENCERRADO: "Encerrado",
+};
+
+export function normalizeTicketStatus(
+  status?: string | null
+): TicketStatus | null {
+  if (!status) {
+    return null;
+  }
+  const normalized = status
+    .trim()
+    .replace(/[\s-]+/g, "_")
+    .toUpperCase();
+  switch (normalized) {
+    case "AGUARDANDO":
+    case "CANCELADO":
+    case "ENCERRADO":
+      return normalized;
+    case "EM_ATENDIMENTO":
+    case "EMATENDIMENTO":
+      return "EM_ATENDIMENTO";
+    default:
+      return null;
+  }
+}
+
+export function getTicketStatusLabel(status?: string | null): string {
+  const normalized = normalizeTicketStatus(status);
+  if (normalized) {
+    return STATUS_LABELS[normalized];
+  }
+  return status ? String(status) : "Nao informado";
+}
+
 export type TicketType = {
   id: number;
   name?: string | null;

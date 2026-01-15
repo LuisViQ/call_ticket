@@ -15,6 +15,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import loginService from "../../services/auth.service";
 import { storeJwtToken, storeUserData } from "../../utils/utils";
 import { useAuth } from "../../contexts/AuthContext";
+import { StatusBar } from "expo-status-bar";
 
 const MAX_EMAIL_LENGTH = 254;
 const MAX_PASSWORD_LENGTH = 128;
@@ -61,6 +62,7 @@ export function LoginScreen() {
       style={[styles.root, styles.flex]}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
+      <StatusBar style="dark" />
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
