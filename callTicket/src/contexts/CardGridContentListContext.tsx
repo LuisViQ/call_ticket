@@ -72,7 +72,7 @@ export function CardGridContentListProvider({
       }
       if (!data.ok) {
         setTickets([]);
-        setError("Nao ha chamados.");
+        setError("Você não tem nenhum chamados.");
         return;
       }
       setTickets(data.data || []);
@@ -89,7 +89,7 @@ export function CardGridContentListProvider({
         if (err instanceof Error) {
           setError(err.message);
         } else {
-          setError("Nao foi possivel carregar os chamados.");
+          setError("Não foi possivel carregar os chamados.");
         }
       }
     } finally {

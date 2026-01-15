@@ -3,6 +3,7 @@ import { Image, ScrollView, Text, View } from "react-native";
 import { RouteProp, useRoute } from "@react-navigation/native";
 import { styles } from "./styles";
 import { TicketItem } from "../../services/tickets.service";
+import { StatusBar } from "expo-status-bar";
 
 type AppStackParamList = {
   TicketDetailScreen: { ticket: TicketItem };
@@ -50,9 +51,9 @@ export default function TicketDetailScreen() {
   const [imageStatus, setImageStatus] = useState<
     Record<string, "loading" | "loaded" | "error" | "timeout">
   >({});
-  const imageTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>(
-    {}
-  );
+  const imageTimeoutsRef = useRef<
+    Record<string, ReturnType<typeof setTimeout>>
+  >({});
   // Monta a lista de URLs de anexos (campo attachments ou url unica).
   const attachmentUrls = useMemo(() => {
     const urls =
@@ -133,7 +134,10 @@ export default function TicketDetailScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>{ticket.title || `Chamado #${ticket.id}`}</Text>
+      <StatusBar style="dark" />
+      <Text style={styles.title}>
+        {ticket.title || `Chamado #${ticket.id}`}
+      </Text>
 
       <View style={styles.section}>
         <Text style={styles.label}>Status</Text>
