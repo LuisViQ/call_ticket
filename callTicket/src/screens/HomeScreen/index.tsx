@@ -203,7 +203,11 @@ function HomeScreenContent() {
                 }
               >
                 <View style={styles.ticketHeader}>
-                  <Text style={styles.ticketTitle}>
+                  <Text
+                    style={styles.ticketTitle}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
                     {titleText || `Chamado #${item.id}`}
                   </Text>
                   <View

@@ -266,6 +266,7 @@ export default function NewTicketScreen() {
               if (titleError) setTitleError("");
               if (submitError) setSubmitError("");
             }}
+            maxLength={40}
             placeholder="Titulo do chamado"
             placeholderTextColor="#bdbdbd"
             style={[styles.input, styles.inputSingleLine]}
