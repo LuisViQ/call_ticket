@@ -32,7 +32,11 @@ TicketAttachment
 ErrorResponse
 -> { ok: false, error: string }
 
-Base: /api
+Base: /v1
+
+Arquivos estaticos
+
+GET /ticket_attachments/<arquivo> acesso a arquivos enviados via upload
 
 Health
 
@@ -90,3 +94,10 @@ Header: Authorization: Bearer <token>
 Body: multipart/form-data com campo "image"
 Obs: use o url retornado no campo url do ticket.
 -> { "ok": true, "data": { "filename": "uuid.jpg", "originalName": "foto.jpg", "mimetype": "image/jpeg", "size": 12345, "path": "ticket_attachments/uuid.jpg", "url": "/ticket_attachments/uuid.jpg" } }
+
+Banco de dados (dump)
+
+Arquivo: bdDUMP/dump-call_ticket-202601161342.sql
+Importar (exemplo):
+mysql -u root -p call_ticket < bdDUMP/dump-call_ticket-202601161342.sql
+Obs: o dump contem schema, triggers e dados de exemplo para desenvolvimento.
